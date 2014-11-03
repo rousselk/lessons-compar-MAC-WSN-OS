@@ -215,9 +215,8 @@ unspecified number of packets at the fixed rate; the simultaion ends after
 10 minutes.
 \end{itemize}
 
-These diffrent kind of simulations allow us to easily determine respectively
-QoS and duty cycle statistics without bias, as we will now see in the next
-section.
+These diffrent kind of simulations allow us to easily compute respectively
+QoS data and duty cycle statistics, as we will now see in the next section.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -293,35 +292,35 @@ success rate & 100\% & 99.92\% & 86.32\% & 5.98\% \\
 \multicolumn{5}{|l|}{Channel Check Rate = 64 Hz}\\
 \hline
 NODES & & & & \\
-packets lost & & & & \\
-packets transmitted & & & & \\
-success rate & \% & \% & \% & \% \\
+packets lost & --- & 0 & 5 & 1982 \\
+packets transmitted & --- & 5000 & 4995 & 3018 \\
+success rate & --- & 100\% & 99.90\% & 60.36\% \\
 ROUTER & & & & \\
-packets lost & & & & \\
-packets transmitted & & & & \\
-success rate & \% & \% & \% & \% \\
+packets lost & --- & 0 & 4 & 2096 \\
+packets transmitted & --- & 5000 & 4991 & 958 \\
+success rate & --- & 100\% & 99.82\% & 19.16\% \\
 \hline
 \multicolumn{5}{|l|}{Channel Check Rate = 128 Hz}\\
 \hline
 NODES & & & & \\
-packets lost & & & & \\
-packets transmitted & & & & \\
-success rate & \% & \% & \% & \% \\
+packets lost & --- & 31 & 637 & 2863 \\
+packets transmitted & --- & 4969 & 4363 & 2137 \\
+success rate & --- & 99.38\% & 87.26\% & 42.74\% \\
 ROUTER & & & & \\
-packets lost & & & & \\
-packets transmitted & & & & \\
-success rate & \% & \% & \% & \% \\
+packets lost & --- & 0 & 46 & 635 \\
+packets transmitted & --- & 4969 & 4317 & 1541 \\
+success rate & --- & 99.38\% & 86.34\% & 30.82\% \\
 \hline
 \multicolumn{5}{|l|}{Channel Check Rate = 256 Hz}\\
 \hline
 NODES & & & & \\
-packets lost & & & & \\
-packets transmitted & & & & \\
-success rate & \% & \% & \% & \% \\
+packets lost & --- & 4723 & 4902 & 4962 \\
+packets transmitted & --- & 277 & 98 & 38 \\
+success rate & --- & 5.54\% & 1.96\% & 0.76\% \\
 ROUTER & & & & \\
-packets lost & & & & \\
-packets transmitted & & & & \\
-success rate & \% & \% & \% & \% \\
+packets lost & --- & 289 & 192 & 112 \\
+packets transmitted & --- & 20 & 18 & 18 \\
+success rate & --- & 0.40\% & 0.36\% & 0.36\% \\
 \hline
 Setup & Moderate & High & Very High & Extreme \\
 \hline
@@ -339,8 +338,11 @@ The data shown in table \ref{TblSuccessRate} shows us many facts:
 \item \emph{The QoS increases with Channel Check Rate.} While the default
 rate of 8~Hz gives poor results in every case, each doubling of frequency
 allows us to obtain excellent results (destination arrival rate of 98\%
-or more) in a new scenario. At 128~Hz, we get an acceptable rate (nn\%)
-even in the extreme setup.
+or more) in a new scenario: respectively ``high'' at 16~Hz, and ``very
+high'' at 31~Hz.\\
+For the ``extreme'' setup, the best results are obtained at 128~Hz
+(30\% of packets arrived at destination); there is no way to obtain
+good results with this scenario.
 
 \item \emph{The packet losses are mainly due to the router.}\\
 In the ``moderate'' and ``high'' setups, communication between the nodes
@@ -353,21 +355,23 @@ nodes and router is less satifactory (only 78\% of success), but the vast
 majority of packet loss (about 64\% of all the emitted packets) is still
 due to the router.\\
 In the ``extreme'' setup, there are major losses at the node level at 8~Hz
-and 16~Hz, but at 32~Hz and more, the packet losses are again mainly due
-to the router.\\
-We can then conclude that relaying packets at the router level is the
-weak point of the software platform, and more precisely of the ContikiMAC
-RDC protocol.
+and 16~Hz; while at 32~Hz and 64~Hz, the packet losses are again mainly due
+to the router; at 128~Hz, losses are again mainly caused at the node level.
+It seems that in this scenario, the radio medium saturation is tha actual
+main cause of low QoS.\\
+Otherwise, we can then conclude that relaying packets at the router level
+is the weak point of the software platform, and more precisely of the
+ContikiMAC RDC protocol.
 
 \item \emph{The network transmission stalls at a channel check frequency
-of 256~Hz.} All results drop dramatically at that frequency.
-This is easily explained: a channel frequency of 256~Hz only leaves
-4~milliseconds of duty cycle, while a 110 byte packet to be transmitted
-physically needs 3.5~ms to be transferred on the physical radio medium
-(at the IEEE 802.15.4 standard rate of 250~kbit/s). This frequency is
-thus saturating the physical medium. We can then easily conclude that
-using a channel check frequency of 256~Hz or more is counter-productive,
-and can only give unsatisfactory results.\\
+of 256~Hz.} All results drop dramatically to abysmal levels at that
+frequency. This is easily explained: a channel frequency of 256~Hz only
+leaves 4~milliseconds of duty cycle, while a 110 byte packet to be
+transmitted physically needs 3.5~ms to be transferred on the physical
+radio medium (at the IEEE 802.15.4 standard rate of 250~kbit/s).
+This frequency is thus saturating the physical medium. We can then easily
+conclude that using a channel check frequency of 256~Hz or more is
+counter-productive, and can only give very unsatisfactory results.\\
 \emph{We would then recommend 128~Hz as the maximal value for the channel
 check frequency parameter.}
 
@@ -527,7 +531,7 @@ even looking for ``basic'' low-power consumption is impossible.
 Radio duty cycles, under such pressure, quickly go into the high
 and very-high domain.\\
 One of the major characteristics and advantages of ContikiMAC---being
-very-low- or even low-power friendly--- is thus lost, when running
+very-low- or even low-power friendly---is thus lost, when running
 in the situations we want to study.
 
 \item \emph{Duty cycle statistics---logically---raise with the rate of
@@ -604,14 +608,17 @@ radio medium.
 
 We were able to show---with the limits and preventions discussed hereabove
 in section \ref{SectLimits}---that this reference software platform, while
-designed for much lighter network loads, can handle quite gracefully the
-heavy loads we imposed on it during our simulations, managing to obtain
-a good to excellent QoS (few packets lost during transmissions).
+designed for much lighter network loads, can handle quite gracefully some
+the heavy loads we imposed on it during our simulations, managing to obtain
+a good to excellent QoS---that is: few packets lost during transmissions.
+(Under extreme loads however, it becomes impossible to obtain satisfactory
+results for QoS: the radio medium becoming saturated causes the MAC/RDC
+layer to stall and become ineffective.)
 
-To that end, however, one has to change parameters in the Contiki source
-code, especially the channel check frequency, the default value for these
-parameters being totally unfit to handle the heavy loads in an acceptable
-manner.
+To obtain a satisfactory QoS, however, one has to change parameters in
+the Contiki source code, especially the channel check frequency, the default
+value for these parameters being totally unfit to handle the heavy loads
+in an acceptable manner.
 
 One must also accept that there is no way to keep the very low power
 consumption feature when dealing with such heavy network loads, the
