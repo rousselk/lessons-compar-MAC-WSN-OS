@@ -41,15 +41,10 @@
           MAC protocols, ContikiMAC}
 
 
-\abstract{In the literature, Wireless Sensor Networks (WSN) have been tested
-and used under the assumption of light to moderate network loads. We want
-to test whether they are able to perform correctly under heavy load,
-trying to approach the theoretical bandwith limit of 250~kilobit/second
-for the IEEE 802.15.4 radio medium.\\
-As a first experiment, we tried to simulate a basic WSN, using the
-reference software platform: Contiki OS and its default network stack.\\
-The simulations show that this configuration can perform quite well
-under heavy loads, if configuration parameters are tweaked correctly.}
+\abstract{Implementing new, high-performance MAC/RDC protocols requires real-time features, to be able to synchronize correctly between different unrelated devices. Such features are highly desirable for operating wireless sensor networks (WSN) that are designed to be part of the Internet of Things (IoT). Unfortunately the operating systems commonly used in this domain cannot provide such features.
+In this article, we describe our implementation of a high-performance MAC/RDC protocol, S-CoSenS, on RIOT OS, a real-time operating system for wireless sensor networks (WSN) and the Internet of Things (IoT).\\
+We then evaluate the performances of our implementation, by comparing it with the well-known ContikiMAC protocol (running on Contiki OS), through simulations running on the Cooja emulator. We focus on QoS results, especially under heavy network loads.
+Our results show that our protocol performs very well, bringing noticeable improvements over ContikiMAC results under a large spectrum of network loads and configurations.}
 
 
 \onecolumn \maketitle \normalsize \vfill
@@ -643,7 +638,7 @@ consumption when running WSN under heavy network loads.
 \vfill
 \bibliographystyle{apalike}
 {\small
-\bibliography{peccs2015}}
+\bibliography{wowmom2015}}
 
 
 \end{document}
