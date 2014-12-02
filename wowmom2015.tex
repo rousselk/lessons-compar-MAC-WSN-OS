@@ -87,7 +87,7 @@ for quite a long time.
 
 
 The current reference OS in the domain of WSN and IoT is \emph{Contiki}
-\cite{ContikiOS}. It's also an open-source OS, which was first released
+\cite{ContikiOS}. It is an open-source OS, which was first released
 in 2002. It is also at the origin of many assets: we can mention, among
 others, the uIP Embedded TCP/IP Stack \cite{uip}, that has been extended
 to uIPv6, the low-power Rime network stack \cite{Rime}, or the Cooja
@@ -118,35 +118,20 @@ using it as our software platform.
 
 Contiki OS is indeed not a real-time OS: the processing of ``events''---using
 Contiki's terminology---is made by using the kernel's scheduler, which is
-based on cooperative multitasking. This scheduler only triggers at a specific,
-pre-determined rate; on the platforms we're interested in, this rate is
-fixed to 128~Hz: this corresponds to a time skew of up to 8~milliseconds
+based on cooperative multitasking (using ``protothreads''; this also implies
+restrictions on the use of the \texttt{switch} construct of the C language).
+This scheduler only triggers at a specific, pre-determined rate; on
+the platforms we're interested in, this rate is fixed to 128~Hz:
+this corresponds to a time skew of up to 8~milliseconds
 (8000~microseconds) to process an event, interruption management being
 one of the possible events. Such a large granularity is clearly
 a huge problem when implementing high-performance MAC/RDC protocols,
-knowing that the transmission of a full-length 802.15.4 packet takes
-bout 4~milliseconds (4000~microseconds), a time granularity of
-320~microseconds is needed, corresponding to one backoff period (BP).
-
-In an attempt to address this problem, Contiki provides a real-time feature,
-\texttt{rtimer}, which allows to bypass the kernel scheduler and use
-a hardware timer to trigger execution of user-defined functions. However,
-only one instance of \texttt{rtimer} is available, thus only one
-real-time event can be scheduled or executed at any time; this limitation
-forbids development of advanced real-time software---like high-performance
-MAC~/ RDC protocols---or at least makes it very hard.
-Moreover, it is unsafe to execute from \texttt{rtimer}, even
-indirectly, most of the Contiki basic functions (i.e.: kernel, network
-stack, etc.), because these functions are not designed to handle pre-emption.
-Contiki is indeed based on cooperative multithreading, whereas the
-\texttt{rtimer} mechanism seems like a ``independent feature'', coming
-with its own paradigm.
-Only a precise set of functions known as ``interrupt-safe'' (like
-\texttt{process\_poll()}) can be safely invoked from \texttt{rtimer},
-using other parts of Contiki's meaning almost certainly crash or
-unpredictable behaviour. This restriction practically makes it very
-difficult to write Contiki extensions (like network stack layer drivers)
-using \texttt{rtimer}.
+where a time granularity of 320~microseconds is needed, corresponding
+to one backoff period (BP). The only ``real-time-oriented'' feature
+of the system, \texttt{rtimer} does not solve these problems, because
+of its deep limitations: only one instance available, impossibility
+to call most Contiki functions---like those from the kernel or
+the network stack---from the \texttt{rtimer} callbacks.
 
 For all these reasons, we were unable to use Contiki OS to develop and
 implement our high-performance MAC/RDC protocols. We definitely needed
@@ -209,7 +194,8 @@ the best OSes of the embedded and real-time world.
 
 It is currently the default RDC protocol proposed by the Contiki OS, and
 thus it has become a \textit{de facto} standard in the WSN community.
-This protocol is designed to work under the classical CSMA/CA MAC layer.
+This protocol is designed to work under the classical CSMA/CA MAC layer,
+and is based on the \emph{Low-Power Listening} (LPL) paradigm.
 
 It is technically a derivative of the classical X-MAC protocol \cite{XMAC}:
 its basic principle, fundamentally asynchronous, is that every node keep
@@ -231,7 +217,45 @@ The first specificity of ContikiMAC is that, during transmission, instead
 of emitting a specific preamble until the receiver is ready, then sending
 it the actual data packet, the data packet is directly emitted by the
 sender---it is its own preamble---so that receiver(s) can directly receive
-and acknowledge the data packet as soon as its radio is ready.
+and acknowledge the data packet as soon as its radio is ready (see figure
+\ref{FigContikiMACDutyCycle} hereafter).
+
+\begin{figure}[!h]
+\centering
+\begin{tikzpicture}[>=latex]
+%sender
+\draw[->] (0,  1cm) -- +(5cm, 0);
+\draw[anchor=west] (5cm, 1cm) node {Node A};
+\fill[gray] (1.4cm, 1cm) rectangle +(2.75cm, 0.6cm);
+%receiver
+\draw[->] (0, -0.5cm) -- +(5cm, 0);
+\draw[anchor=west] (5cm, -0.5cm) node {Node B};
+%wakeup times
+\fill[gray] (0.5cm, -0.5cm) rectangle +(0.15cm, 0.6cm);
+\fill[gray] (3.4cm, -0.5cm) rectangle +(0.75cm, 0.6cm);
+%packet sent
+\foreach \x in {1,2,3,4,5}
+{
+  \fill[black] (1cm + \x * 0.5cm, 1cm) rectangle +(0.3cm, 0.5cm);
+}
+%packet received
+\fill[black] (3.5cm, -0.5cm) rectangle +(0.3cm, 0.5cm);
+\draw[->,thick] (3.65cm, 1cm) -- +(0, -1cm);
+%ACK
+\fill[black] (3.9cm, -0.5cm) rectangle +(0.1cm, 0.5cm);
+\draw[->,thick] (3.95cm, 0cm) -- +(0, 1cm);
+\fill[black] (3.9cm, 1cm) rectangle +(0.1cm, 0.5cm);
+%brace
+\draw (0.5cm, -0.75cm) .. controls +(0, -0.25cm) .. +(0.9cm, -0.25cm);
+\draw (1.4cm, -1cm)    .. controls +(0.9cm, 0)   .. +(0.9cm, -0.25cm);
+\draw (2.3cm, -1.25cm) .. controls +(0, 0.25cm)  .. +(0.9cm, 0.25cm);
+\draw (3.2cm, -1cm)    .. controls +(0.9cm, 0)   .. +(0.9cm, 0.25cm);
+%brace legend
+\draw[anchor=north] (2.2cm,-1.25cm) node {Node B Duty Cycle};
+\end{tikzpicture}
+\caption{Transmission of a data packet with the ContikiMAC protocol.}
+\label{FigContikiMACDutyCycle}
+\end{figure}
 
 The second specificity is the presence of an optimization mechanism named
 ``transmission phase lock'': senders note the time when they receive
@@ -240,7 +264,50 @@ wake-up, deduce the subsequent expected times when these receivers are
 supposed to be ready to receive packets. Thus, senders can synchronize
 with nodes that have previously received their transmissions, and can
 send their next packets at the optimal period to minimize the useless
-transmission of packets when the intended receiver is offline.
+transmission of packets when the intended receiver is offline. The
+result of this mechanism is shown in figure \ref{FigContikiMACPhaseLock}
+hereafter.
+
+\begin{figure}[!h]
+\centering
+\begin{tikzpicture}[>=latex]
+%sender
+\draw[->] (0,  1cm) -- +(5cm, 0);
+\draw[anchor=west] (5cm, 1cm) node {Node A};
+\fill[gray] (1.7cm, 1cm) rectangle +(0.15cm, 0.6cm);
+\fill[gray] (2.9cm, 1cm) rectangle +(1.25cm, 0.6cm);
+%receiver
+\draw[->] (0, -0.5cm) -- +(5cm, 0);
+\draw[anchor=west] (5cm, -0.5cm) node {Node B};
+%wakeup times
+\fill[gray] (0.5cm, -0.5cm) rectangle +(0.15cm, 0.6cm);
+\fill[gray] (3.4cm, -0.5cm) rectangle +(0.75cm, 0.6cm);
+%packet sent
+\foreach \x in {4,5}
+{
+  \fill[black] (1cm + \x * 0.5cm, 1cm) rectangle +(0.3cm, 0.5cm);
+}
+%packet received
+\fill[black] (3.5cm, -0.5cm) rectangle +(0.3cm, 0.5cm);
+\draw[->,thick] (3.65cm, 1cm) -- +(0, -1cm);
+%ACK
+\fill[black] (3.9cm, -0.5cm) rectangle +(0.1cm, 0.5cm);
+\draw[->,thick] (3.95cm, 0cm) -- +(0, 1cm);
+\fill[black] (3.9cm, 1cm) rectangle +(0.1cm, 0.5cm);
+%brace
+\draw (0.5cm, -0.75cm) .. controls +(0, -0.25cm) .. +(0.9cm, -0.25cm);
+\draw (1.4cm, -1cm)    .. controls +(0.9cm, 0)   .. +(0.9cm, -0.25cm);
+\draw (2.3cm, -1.25cm) .. controls +(0, 0.25cm)  .. +(0.9cm, 0.25cm);
+\draw (3.2cm, -1cm)    .. controls +(0.9cm, 0)   .. +(0.9cm, 0.25cm);
+%brace legend
+\draw[anchor=north] (2.2cm,-1.25cm) node {Node B Duty Cycle};
+\end{tikzpicture}
+\caption{After the transmission in figure \ref{FigContikiMACDutyCycle}
+occured, node A knows when to send packets so that node B is ready
+to receive them, even though both nodes have different duty cycle phases.}
+\label{FigContikiMACPhaseLock}
+\end{figure}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -258,15 +325,17 @@ is listened by routers for collecting incoming 802.15.4 packets, and
 finally a burst transmission period (TP) for emitting adequately
 the packets enqueued during WP.
 
-Note that in contrast to ContikiMAC, S-CoSenS is based on the \emph{receiver
-initiated} paradigm, as implemented in the classical RI-MAC protocol
-\cite{RIMAC}.
+Note that in contrast to ContikiMAC, S-CoSenS is based on the \emph{Low-Power
+Probing} (LPP) paradigm, whose the classical RI-MAC protocol \cite{RIMAC}
+is one of the better known application.
 
 The main advantage of S-CoSenS is its ability to adapt dynamically to the
 wireless network throughput at runtime, by calculating for each radio duty
 cycle the length of SP and WP, according to the number of retransmitted
-packets during previous cycles. It follows a ``sliding average''
-algorithm, where WP duration for each duty cycle is computed as:
+packets during previous cycles.
+
+Moreover, the computation of WP duration follows a ``sliding average''
+algorithm, where WP duration average for each duty cycle is computed as:
 \begin{displaymath}
 \overline{\mathrm{WP}_{n}} = \alpha \cdot \overline{\mathrm{WP}_{n-1}}
                 + (1 - \alpha) \cdot \mathrm{WP}_{n-1}
@@ -336,6 +405,8 @@ in the sub-millisecond range. This is where RIOT OS advanced real-time
 features really shine, while the other comparable OSes are
 for that purpose definitely lacking.
 
+\bigskip
+
 We have implemented S-CoSenS under RIOT, and evaluated it by comparing
 to the ContikiMAC + CSMA/CA couple under Contiki OS.
 
@@ -396,7 +467,7 @@ of the ContikiMAC RDC protocol, under moderately-heavy to extreme network
 loads. The loads were generated by the application loaded on the 10 leaf
 nodes: they were programmed to generate large 802.15.4 network packets
 (90 bytes of payload, which translates to an actual packet size of
-around 110 bytes) at a fixed rate, with random variations to avoid
+111 bytes) at a fixed rate, with random variations to avoid
 medium congestion. The different setups are described in table
 \ref{TblDataRates}: the table gives the average delay between
 each packet transmission on each mote, the average number of
@@ -464,7 +535,7 @@ to perform up to seven retries for a given data packet, by setting the
 parameter to 8 in Contiki source code. This was done in order to put it
 on par with S-CoSenS default configuration, where a packet can by default
 be transmitted up to 8 times before being cancelled.
-Note however, that  the ``retry'' term does not have the same signification
+Attention: the ``retry'' term does not have the same signification
 under S-CoSenS---where it specifies the reemission of \emph{one} instance of
 a packet---than on ContikiMAC where it specifies a new duty cycle during
 which the packet is reemitted an unspecified number of times. This is
@@ -529,7 +600,7 @@ The data shown in table \ref{TblSuccessRate} shows us many facts:
 
 \item ContikiMAC QoS increases with Channel Check Rate.
 
-\item S-CoSenS QoS results are significantly better than ConikiMAC's,
+\item S-CoSenS QoS results are significantly better than ContikiMAC's,
       and are much more stable when the duty cycle duration changes.
 
 \item With ContikiMAC, the packet losses are mainly due to the router.
@@ -550,12 +621,10 @@ TODO
 \subsection{Limitations and Inconsistencies}
 \label{SectLimits}
 
-The current work has of course its limitations:
+The current work has of course its limitations. Its main drawback is that
+\emph{it is only based on simulations.} To be truly accurate, we would need
+to run these tests on actual hardware.
 
-\begin{itemize}
-
-\item \emph{Those are only simulations.} To be truly accurate, we would need
-to run these tests on actual hardware.\\
 Moreover, we constated, during our simulations, an anomaly in the MSPSim
 software (the MSP430 device simulator used by Cooja to emulate MSP430-based
 motes at the cycle level \cite{MSPSim}): \emph{the delay used by the
@@ -563,20 +632,20 @@ simulator to load our large---around 110 bytes---IEEE 802.15.4 packets into
 the CC2420 transceiver TX buffer is too long;} it takes around 3~milliseconds
 to load such a packet to the transceiver in simulation, while our tests
 on the real Zolertia Z1 hardware have explicitely and undoubtly shown that
-loading times are actually about 1~millisecond long. We didn't have time
-to investigate the problem and correct that anomaly.\\
+loading times are actually about 1~millisecond long. The problem seems
+to be caused by an overestimation of the delays caused by the operation
+of the SPI bus that links the MSP430 microcontroller to the CC2420
+radio transceiver on the Z1 hardware.
+We didn't have time to further investigate the problem and correct
+that anomaly.
+
 We also don't know whether or not there are other inconsistencies in
 the simulator software that could also alter the results of our
-simulations...\\
+simulations...
+
 Such anomalies will probably change the results obtained on real
 hardware using the same scenarii and parameters. Unfortunately, we don't
 have enough Z1 motes nor time to perform these real-life tests yet.
-
-\item \emph{We didn't have time to study other results.} We especially
-didn't have time to study radio traces to determine the transmission
-delay of packets from leaf nodes up to their destination (sink).
-
-\end{itemize}
 
 However, we firmly believe that the general facts we observed in our
 simulations won't be overturned by these problems. That's why we still
@@ -588,7 +657,7 @@ present them in the current article.
 \section{\uppercase{Conclusion and Future Works}}
 
 We have build simulation scenarios to test whether our MAC/RDC protocol,
-ContikiMAC, could handle heavy network loads, trying to approach the
+S-CoSenS, could handle heavy network loads, trying to approach the
 theoretical limit of 250~kbit/s of bandwith for the underlying
 IEEE 802.15.4 radio medium.
 
@@ -607,16 +676,16 @@ consumption feature when dealing with such heavy network loads, the
 motes' radio transceivers being heavily activated and solicited to
 handle that charge.
 
-\medskip
+\bigskip
 
-In the future, we would like to try other software platforms with the same
-scenarii, especially by using different MAC and RDC layers in the network
-stacks, and different operating systems. We may also try to use different,
-new hardware devices to run our tests.
+In the future, we would like to try other, more powerful hardware platforms
+with the same scenarii, and try using different MAC and RDC layers in
+the network stack of the RIOT operating system.
 
-We hope to find a way to get a similar or better QoS than the one we observed
-here, while trying to optimize duty cycle statistics to minimize the energy
-consumption when running WSN under heavy network loads.
+We hope to find (a) way(s) to get a similar or better QoS than those
+we observed here, while trying to optimize duty cycle statistics
+to minimize the energy consumption when running WSN, whether under
+light or heavy network loads.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
