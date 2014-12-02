@@ -23,8 +23,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\title{Pushing the limits of Wireless Sensor Networks:
-       Using 802.15.4 Radio Medium under Heavy Loads}
+\title{Lessons Learned through Actual Implementation of MAC/RDC Protocols
+       on 802.15.4 Radio Medium: the Case of S-CoSenS}
 
 
 %\author{
@@ -37,8 +37,17 @@
 %}
 
 
-\keywords{Wireless Sensor Networks, Internet of Things, Heavy Load,
-          MAC protocols, ContikiMAC}
+\keywords{Wireless Sensor Networks, Internet of Things, Heavy Load, QoS,
+          MAC/RDC protocols, S-CoSenS, ContikiMAC}
+
+
+%Nécessité de s'intéresser au cas où les réseaux de WSN ont de fortes charges
+%à transmettre, ne serait-ce que ponctuellement ("bursts").
+
+%Std 802.15.4 : délai entre réception d'un paquet et envoi d'un acquittement
+%entre deux paquets successifs => rarement respectés.
+
+%Lessons learned during protocol implementations... (Experience report)
 
 
 \abstract{Implementing new, high-performance MAC/RDC protocols requires
@@ -81,15 +90,14 @@ The current reference OS in the domain of WSN and IoT is \emph{Contiki}
 \cite{ContikiOS}. It's also an open-source OS, which was first released
 in 2002. It is also at the origin of many assets: we can mention, among
 others, the uIP Embedded TCP/IP Stack \cite{uip}, that has been extended
-to uIPv6, the low-power Rime network stack \cite{Rime}, or the Cooja advanced
-network simulator \cite{Cooja}.
+to uIPv6, the low-power Rime network stack \cite{Rime}, or the Cooja
+advanced network simulator \cite{Cooja}.
 
-While a bit more resource-demanding than TinyOS, Contiki is also very
-lightweight and well adapted to motes. Its greatest advantage over TinyOS
-is that it is based on standard, well-known OS paradigms, and coded
-in standard C language, which makes it relatively easy to learn and program.
-It offers an event-based kernel, implemented using cooperative multithreading,
-and a complete network stack. All of these features and advantages have made
+Contiki is very lightweight and well adapted to motes and
+resource-constrained devices. It is coded in standard C language, which
+makes it relatively easy to learn and program. It offers an event-based
+kernel, implemented using cooperative multithreading, and a complete
+network stack. All of these features and advantages have made
 Contiki widespread, making it the reference OS when it comes to WSN.
 
 Contiki developers also have made advances in the MAC/RDC domain: many
@@ -120,7 +128,7 @@ knowing that the transmission of a full-length 802.15.4 packet takes
 bout 4~milliseconds (4000~microseconds), a time granularity of
 320~microseconds is needed, corresponding to one backoff period (BP).
 
-To address this problem, Contiki provides a real-time feature,
+In an attempt to address this problem, Contiki provides a real-time feature,
 \texttt{rtimer}, which allows to bypass the kernel scheduler and use
 a hardware timer to trigger execution of user-defined functions. However,
 only one instance of \texttt{rtimer} is available, thus only one
@@ -190,6 +198,146 @@ of deeply embedded hardware microcontrollers, while offering state-of-the-art
 techniques (preemptive multitasking, tickless scheduler, optimal use
 of hardware timers) that---we believe---makes it on par with
 the best OSes of the embedded and real-time world.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{\uppercase{Protocols}}
+\label{SectProtoDescription}
+
+\subsection{The ContikiMAC RDC protocol}
+
+It is currently the default RDC protocol proposed by the Contiki OS, and
+thus it has become a \textit{de facto} standard in the WSN community.
+This protocol is designed to work under the classical CSMA/CA MAC layer.
+
+It is technically a derivative of the classical X-MAC protocol \cite{XMAC}:
+its basic principle, fundamentally asynchronous, is that every node keep
+its radio transceiver off as much as possible, only waking it up for short
+delay of radio medium listening at a fixed rate (by default, eight times
+per second in ContikiMAC). If, during the short amount of time the radio
+transceiver is on, data is sensed on the medium, the radio transceiver
+is kept on until the whole transmission is done; otherwise, the node
+goes back into ``radio silence mode'' to spare energy.
+This ability to automatically adapt the duration of transceiver activity
+to the live traffic on radio channel is what makes ContikiMAC a
+\emph{auto-adaptative} (or \emph{self-adaptative}) protocol.
+
+When a node has to emit a packet, it continuously emits it until the
+intended receiver nodes ``wakes up'' its radio transceiver, receives
+the transmitted data, and sends back an acknowledgement.
+
+The first specificity of ContikiMAC is that, during transmission, instead
+of emitting a specific preamble until the receiver is ready, then sending
+it the actual data packet, the data packet is directly emitted by the
+sender---it is its own preamble---so that receiver(s) can directly receive
+and acknowledge the data packet as soon as its radio is ready.
+
+The second specificity is the presence of an optimization mechanism named
+``transmission phase lock'': senders note the time when they receive
+acknowledgement from receivers, and according to the known rate of radio
+wake-up, deduce the subsequent expected times when these receivers are
+supposed to be ready to receive packets. Thus, senders can synchronize
+with nodes that have previously received their transmissions, and can
+send their next packets at the optimal period to minimize the useless
+transmission of packets when the intended receiver is offline.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Our first design: the S-CoSenS MAC/RDC protocol}
+
+The first MAC~/ RDC protocol we wanted to implement is S-CoSenS, which
+is designed to work on top of the IEEE 802.15.4 physical layer.
+
+It is an evolution of the already published CoSenS protocol \cite{CosensConf}:
+it adds to the latter a sleeping period for energy saving.
+Thus, the basic principle of S-CoSenS is to delay the forwarding (routing)
+of received packets, by dividing the radio duty cycle in three periods:
+a sleeping period (SP), a waiting period (WP) where the radio medium
+is listened by routers for collecting incoming 802.15.4 packets, and
+finally a burst transmission period (TP) for emitting adequately
+the packets enqueued during WP.
+
+Note that in contrast to ContikiMAC, S-CoSenS is based on the \emph{receiver
+initiated} paradigm, as implemented in the classical RI-MAC protocol
+\cite{RIMAC}.
+
+The main advantage of S-CoSenS is its ability to adapt dynamically to the
+wireless network throughput at runtime, by calculating for each radio duty
+cycle the length of SP and WP, according to the number of retransmitted
+packets during previous cycles. It follows a ``sliding average''
+algorithm, where WP duration for each duty cycle is computed as:
+\begin{displaymath}
+\overline{\mathrm{WP}_{n}} = \alpha \cdot \overline{\mathrm{WP}_{n-1}}
+                + (1 - \alpha) \cdot \mathrm{WP}_{n-1}
+\end{displaymath}
+where $\overline{\mathrm{WP}_{n}}$ and $\overline{\mathrm{WP}_{n-1}}$
+are respectively the average WP length at $n^{\mathrm{th}}$ and
+$(n-1)^{\mathrm{th}}$ cycle, and $\mathrm{WP}_{n-1}$ is the actual
+length of the $(n-1)^{\mathrm{th}}$ cycle.
+
+The local synchronization between a S-CoSenS router and the other nodes
+of its PAN is done thanks to a beacon packet, that is broadcasted by
+the router at the beginning of each duty cycle. This beacon contains the
+duration (in microseconds) of the SP and WP for the currently beginning
+duty cycle.
+
+The whole S-CoSenS duty cycle workflow for a PAN router is summarized
+in figure \ref{FigSCosensDutyCycle} hereafter.
+
+\begin{figure}[!h]
+\centering
+\begin{tikzpicture}[>=latex]
+\draw[->] (-1cm,  0.25cm) -- +(7.5cm, 0);
+\draw[->] (-1cm, -0.25cm) -- +(7.5cm, 0);
+%beacon
+\fill[black] (0cm, -0.25cm) rectangle +(0.2cm, 0.5cm);
+\draw[->,thick] (0.1cm, 0.25cm) -- +(0, 0.5cm);
+\draw (0.1cm, 1cm) node {Beacon};
+%SP
+\draw[thick] (0cm, -0.25cm) -- +(0, 0.5cm);
+\fill[lightgray] (0.2cm, -0.25cm) rectangle +(1.8cm, 0.5cm);
+\draw (1.1cm, 0) node {SP};
+%WP
+\draw[thick] (2cm, -0.25cm) -- +(0, 0.5cm);
+\draw (3cm, 0) node {WP};
+%TP
+\draw[thick] (4cm, -0.25cm) -- +(0, 0.5cm);
+\draw (5cm, 0) node {TP};
+\draw[thick] (6cm, -0.25cm) -- +(0, 0.5cm);
+%RX packets
+\draw[->,thick] (2.5cm, 0.75cm) -- +(0, -0.5cm);
+\draw (2.5cm, 1cm) node {P1};
+\draw[->,thick] (3cm, 0.75cm) -- +(0, -0.5cm);
+\draw (3cm, 1cm) node {P2};
+\draw[->,thick] (3.5cm, 0.75cm) -- +(0, -0.5cm);
+\draw (3.5cm, 1cm) node {P3};
+%TX packets
+\draw[->,thick] (4.5cm, 0.25cm) -- +(0, 0.5cm);
+\draw (4.5cm, 1cm) node {P1};
+\draw[->,thick] (5cm, 0.25cm) -- +(0, 0.5cm);
+\draw (5cm, 1cm) node {P2};
+\draw[->,thick] (5.5cm, 0.25cm) -- +(0, 0.5cm);
+\draw (5.5cm, 1cm) node {P3};
+%brace
+\draw (0cm,-0.5cm)    .. controls +(0,-0.25cm) .. +(1.5cm,-0.25cm);
+\draw (1.5cm,-0.75cm) .. controls +(1.5cm,0)   .. +(1.5cm,-0.25cm);
+\draw (3cm,-1cm)      .. controls +(0,0.25cm)  .. +(1.5cm,0.25cm);
+\draw (4.5cm,-0.75cm) .. controls +(1.5cm,0)   .. +(1.5cm,0.25cm);
+\end{tikzpicture}
+\caption{A typical S-CoSenS router duty cycle.}
+\label{FigSCosensDutyCycle}
+\end{figure}
+
+We thus need to synchronize with enough accuracy different devices (that
+can be based on different hardware platforms) on duty cycles whose periods
+are dynamically calculated at runtime, with resolution that needs to be
+in the sub-millisecond range. This is where RIOT OS advanced real-time
+features really shine, while the other comparable OSes are
+for that purpose definitely lacking.
+
+We have implemented S-CoSenS under RIOT, and evaluated it by comparing
+to the ContikiMAC + CSMA/CA couple under Contiki OS.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -278,103 +426,12 @@ For each scenario, we performed two kind of simulations:
 nodes have transmitted their quota of packets;
 
 \item a \emph{fixed duration simulation}, during which each node emits an
-unspecified number of packets at the fixed rate; the simultaion ends after
+unspecified number of packets at the fixed rate; the simulation ends after
 10 minutes.
 \end{itemize}
 
 These different kind of simulations allow us to easily compute respectively
 QoS data and duty cycle statistics, as we will now see in the next section.
-
-\bigskip
-
-The first MAC~/ RDC protocol we wanted to implement is S-CoSenS, which
-is designed to work on top of the IEEE 802.15.4 physical layer.
-
-It is an evolution of the already published CoSenS protocol \cite{CosensConf}:
-it adds to the latter a sleeping period for energy saving.
-Thus, the basic principle of S-CoSenS is to delay the forwarding (routing)
-of received packets, by dividing the radio duty cycle in three periods:
-a sleeping period (SP), a waiting period (WP) where the radio medium
-is listened by routers for collecting incoming 802.15.4 packets, and
-finally a burst transmission period (TP) for emitting adequately
-the packets enqueued during WP.
-
-The main advantage of S-CoSenS is its ability to adapt dynamically to the
-wireless network throughput at runtime, by calculating for each radio duty
-cycle the length of SP and WP, according to the number of retransmitted
-packets during previous cycles. It follows a ``sliding average''
-algorithm, where WP duration for each duty cycle is computed as:
-\begin{displaymath}
-\overline{\mathrm{WP}_{n}} = \alpha \cdot \overline{\mathrm{WP}_{n-1}}
-                + (1 - \alpha) \cdot \mathrm{WP}_{n-1}
-\end{displaymath}
-where $\overline{\mathrm{WP}_{n}}$ and $\overline{\mathrm{WP}_{n-1}}$
-are respectively the average WP length at $n^{\mathrm{th}}$ and
-$(n-1)^{\mathrm{th}}$ cycle, and $\mathrm{WP}_{n-1}$ is the actual
-length of the $(n-1)^{\mathrm{th}}$ cycle.
-
-The local synchronization between a S-CoSenS router and the other nodes
-of its PAN is done thanks to a beacon packet, that is broadcasted by
-the router at the beginning of each duty cycle. This beacon contains the
-duration (in microseconds) of the SP and WP for the currently beginning
-duty cycle.
-
-The whole S-CoSenS duty cycle workflow for a PAN router is summarized
-in figure \ref{FigSCosensDutyCycle} hereafter.
-
-\begin{figure}[!h]
-\centering
-\begin{tikzpicture}[>=latex]
-\draw[->] (-1cm,  0.25cm) -- +(7.5cm, 0);
-\draw[->] (-1cm, -0.25cm) -- +(7.5cm, 0);
-%beacon
-\fill[black] (0cm, -0.25cm) rectangle +(0.2cm, 0.5cm);
-\draw[->,thick] (0.1cm, 0.25cm) -- +(0, 0.5cm);
-\draw (0.1cm, 1cm) node {Beacon};
-%SP
-\draw[thick] (0cm, -0.25cm) -- +(0, 0.5cm);
-\fill[lightgray] (0.2cm, -0.25cm) rectangle +(1.8cm, 0.5cm);
-\draw (1.1cm, 0) node {SP};
-%WP
-\draw[thick] (2cm, -0.25cm) -- +(0, 0.5cm);
-\draw (3cm, 0) node {WP};
-%TP
-\draw[thick] (4cm, -0.25cm) -- +(0, 0.5cm);
-\draw (5cm, 0) node {TP};
-\draw[thick] (6cm, -0.25cm) -- +(0, 0.5cm);
-%RX packets
-\draw[->,thick] (2.5cm, 0.75cm) -- +(0, -0.5cm);
-\draw (2.5cm, 1cm) node {P1};
-\draw[->,thick] (3cm, 0.75cm) -- +(0, -0.5cm);
-\draw (3cm, 1cm) node {P2};
-\draw[->,thick] (3.5cm, 0.75cm) -- +(0, -0.5cm);
-\draw (3.5cm, 1cm) node {P3};
-%TX packets
-\draw[->,thick] (4.5cm, 0.25cm) -- +(0, 0.5cm);
-\draw (4.5cm, 1cm) node {P1};
-\draw[->,thick] (5cm, 0.25cm) -- +(0, 0.5cm);
-\draw (5cm, 1cm) node {P2};
-\draw[->,thick] (5.5cm, 0.25cm) -- +(0, 0.5cm);
-\draw (5.5cm, 1cm) node {P3};
-%brace
-\draw (0cm,-0.5cm)    .. controls +(0,-0.25cm) .. +(1.5cm,-0.25cm);
-\draw (1.5cm,-0.75cm) .. controls +(1.5cm,0)   .. +(1.5cm,-0.25cm);
-\draw (3cm,-1cm)      .. controls +(0,0.25cm)  .. +(1.5cm,0.25cm);
-\draw (4.5cm,-0.75cm) .. controls +(1.5cm,0)   .. +(1.5cm,0.25cm);
-\end{tikzpicture}
-\caption{A typical S-CoSenS router duty cycle.}
-\label{FigSCosensDutyCycle}
-\end{figure}
-
-We thus need to synchronize with enough accuracy different devices (that
-can be based on different hardware platforms) on duty cycles whose periods
-are dynamically calculated at runtime, with resolution that needs to be
-in the sub-millisecond range. This is where RIOT OS advanced real-time
-features really shine, while the other comparable OSes are
-for that purpose definitely lacking.
-
-We have implemented S-CoSenS under RIOT, and evaluated it by comparing
-to the ContikiMAC + CSMA/CA couple under Contiki OS.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -401,17 +458,18 @@ Its default value is 8, meaning the radio channel is checked eight times
 per second; this parameter is actually given in Hertz.
 In S-CoSenS, the default duration for the subframe is 100 ms.
 
-Note that we also allowed the the standard CSMA/CA MAC layer to perform up
-to seven retries for a given data packet, by setting the
+Note that we also allowed, on Contiki, the the standard CSMA/CA MAC layer
+to perform up to seven retries for a given data packet, by setting the
 \texttt{CSMA\_CONF\_MAX\_MAC\_TRANSMISSIONS}
-parameter to 8 in Contiki source code. This was done to put it on par
-with S-CoSenS default configuration.
-However, the ``retry'' term does not have the same signification under
-S-CoSenS---where it specifies the reemission of one instance of a
-packet---than on ContikiMAC where it specifies a new duty cycle during
+parameter to 8 in Contiki source code. This was done in order to put it
+on par with S-CoSenS default configuration, where a packet can by default
+be transmitted up to 8 times before being cancelled.
+Note however, that  the ``retry'' term does not have the same signification
+under S-CoSenS---where it specifies the reemission of \emph{one} instance of
+a packet---than on ContikiMAC where it specifies a new duty cycle during
 which the packet is reemitted an unspecified number of times. This is
 the consequence of the fundamental difference in design between the two
-protocols.
+protocols (see section \ref{SectProtoDescription} above).
 
 This default value of 8~Hz only gives poor results concerning QoS.
 We changed the parameter value, and doubled it up to 256~Hz. The results
@@ -481,12 +539,13 @@ The data shown in table \ref{TblSuccessRate} shows us many facts:
 
 \end{itemize}
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Delays}
 
 TODO
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Limitations and Inconsistencies}
 \label{SectLimits}
