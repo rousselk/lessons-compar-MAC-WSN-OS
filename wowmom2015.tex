@@ -542,9 +542,10 @@ which the packet is reemitted an unspecified number of times. This is
 the consequence of the fundamental difference in design between the two
 protocols (see section \ref{SectProtoDescription} above).
 
-This default value of 8~Hz only gives poor results concerning QoS.
-We changed the parameter value, and doubled it up to 256~Hz. The results
-we obtained are shown in table \ref{TblSuccessRate}.
+This default value of 8~Hz/125~ms only gives very poor results for ContikiMAC.
+To obtain fairer results for the latter protocol, we changed that parameter's
+value, and doubled it up to 64~Hz/16~ms.
+The results we obtained are shown in table \ref{TblSuccessRate}.
 
 \begin{table*}[htbp]
 \centering
@@ -600,8 +601,12 @@ The data shown in table \ref{TblSuccessRate} shows us many facts:
 
 \item ContikiMAC QoS increases with Channel Check Rate.
 
-\item S-CoSenS QoS results are significantly better than ContikiMAC's,
-      and are much more stable when the duty cycle duration changes.
+\item S-CoSenS QoS results are either similar or better than ContikiMAC's.
+
+\item S-CoSenS QoS results are much more stable when the duty cycle duration
+      changes than ContikiMAC's: thus, S-CoSenS performance is much more
+      predictable, and gives most of the time the insurance of a fair
+      rate of successfully transmitted packets.
 
 \item With ContikiMAC, the packet losses are mainly due to the router.
 
@@ -614,7 +619,29 @@ The data shown in table \ref{TblSuccessRate} shows us many facts:
 
 \subsection{Delays}
 
-TODO
+Using the results of the same experiments, we analyzed the traces of
+exchanged packets during simulations, and computed the delays that takes each
+successfully transmitted packet to go from its originating leaf node up to
+the sink---that is: the duration of its two-hop transmission.
+
+The results we obtained are shown in figure xx.
+
+These results also indicate that:
+
+\begin{itemize}
+
+\item ContikiMAC delays shorten with Channel Check Rate.
+
+\item S-CoSenS delays are always similar or shorter then than ContikiMAC's.
+
+\item S-CoSenS delays are much more stable when the duty cycle duration
+      changes. In most cases, S-CoSenS gives the insurance that packet
+      transmission delays will keep under a reasonable limit.
+
+\end{itemize}
+
+These observation are strictly similar to those made for QoS results.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
