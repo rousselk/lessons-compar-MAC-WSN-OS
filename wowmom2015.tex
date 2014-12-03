@@ -27,14 +27,14 @@
        on 802.15.4 Radio Medium: the Case of S-CoSenS}
 
 
-%\author{
-%\authorname{K\'evin Roussel, Ye-Qiong Song and Olivier Zendra}
-%\affiliation{LORIA/INRIA Nancy Grand-Est,\\
-%             Universit\'e de Lorraine,\\
-%             615, rue du Jardin Botanique,\\
-%             54600 Villers-L\`es-Nancy, France}
-%\email{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}
-%}
+\author{
+\authorname{K\'evin Roussel, Ye-Qiong Song and Olivier Zendra}
+\affiliation{LORIA/INRIA Nancy Grand-Est,\\
+             Universit\'e de Lorraine,\\
+             615, rue du Jardin Botanique,\\
+             54600 Villers-L\`es-Nancy, France}
+\email{\texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}}
+}
 
 
 \keywords{Wireless Sensor Networks, Internet of Things, Heavy Load, QoS,
@@ -129,9 +129,13 @@ a huge problem when implementing high-performance MAC/RDC protocols,
 where a time granularity of 320~microseconds is needed, corresponding
 to one backoff period (BP). The only ``real-time-oriented'' feature
 of the system, \texttt{rtimer} does not solve these problems, because
-of its deep limitations: only one instance available, impossibility
-to call most Contiki functions---like those from the kernel or
-the network stack---from the \texttt{rtimer} callbacks.
+of its deep limitations:
+\begin{itemize}
+\item only one instance is available;
+\item it is impossible to call most Contiki functions---like those from
+the kernel or the network stack---from the \texttt{rtimer} callbacks,
+trying to do so provoking crashes or unexpected behavior.
+\end{itemize}
 
 For all these reasons, we were unable to use Contiki OS to develop and
 implement our high-performance MAC/RDC protocols. We definitely needed
@@ -151,37 +155,23 @@ microcontrollers) and a comprehensive set of features, including
 a network stack.
 
 Moreover, it offers key features that are otherwise yet unknown in
-the WSN/IoT domain:
-
+the WSN/IoT domain, the most important for us being:
 \begin{itemize}
-
-\item an efficient, interrupt-driven, tickless \emph{micro-kernel};
-
-\item that kernel includes a priority-aware task scheduler, providing
-      \emph{pre-emptive multitasking};
-
+\item an efficient, interrupt-driven, tickless micro-kernel providing
+      pre-emptive multitasking;
 \item a highly efficient use of \emph{hardware timers}: all of them can be
       used concurrently (especially since the kernel is tickless), offering
       the ability to schedule actions with high granularity; on low-end
       devices, based on MSP430 architecture, events can be scheduled
-      with a resolution of 32~microseconds;
-
-\item RIOT is entirely written in \emph{standard C language}; but unlike
-      Contiki, there are no restrictions on usable constructs (i.e.: like
-      those introduced by the protothreads mechanism);
-
-\item a clean and \emph{modular design}, that makes development with and
-      \emph{into} the system itself easier and more productive.
-
+      with a resolution of 30~microseconds;
 \end{itemize}
+These features are what make RIOT a full-fledged \emph{real-time} operating
+system.
 
-The first three features listed hereabove make RIOT a full-fledged
-\emph{real-time} operating system.
-
-RIOT is a powerful real-time operating system, adapted to the limitations
-of deeply embedded hardware microcontrollers, while offering state-of-the-art
-techniques (preemptive multitasking, tickless scheduler, optimal use
-of hardware timers) that---we believe---makes it on par with
+Thus, RIOT is a powerful real-time operating system, adapted to the
+limitations of deeply embedded hardware microcontrollers, while offering
+state-of-the-art techniques (preemptive multitasking, tickless scheduler,
+optimal use of hardware timers) that---we believe---makes it on par with
 the best OSes of the embedded and real-time world.
 
 
@@ -314,7 +304,10 @@ to receive them, even though both nodes have different duty cycle phases.}
 \subsection{Our first design: the S-CoSenS MAC/RDC protocol}
 
 The first MAC~/ RDC protocol we wanted to implement is S-CoSenS, which
-is designed to work on top of the IEEE 802.15.4 physical layer.
+is designed to work on top of the IEEE 802.15.4 physical layer. In contrast
+to ContikiMAC, which is a RDC protocol and is designed to work with the
+classical CSMA/CA MAC layer, S-CoSenS fills the role of both MAC and RDC
+layers---that's why we call it a MAC~/RDC protocol.
 
 It is an evolution of the already published CoSenS protocol \cite{CosensConf}:
 it adds to the latter a sleeping period for energy saving.
@@ -407,7 +400,7 @@ for that purpose definitely lacking.
 
 \bigskip
 
-We have implemented S-CoSenS under RIOT, and evaluated it by comparing
+We have implemented S-CoSenS under RIOT OS, and evaluated it by comparing
 to the ContikiMAC + CSMA/CA couple under Contiki OS.
 
 
@@ -545,57 +538,41 @@ protocols (see section \ref{SectProtoDescription} above).
 This default value of 8~Hz/125~ms only gives very poor results for ContikiMAC.
 To obtain fairer results for the latter protocol, we changed that parameter's
 value, and doubled it up to 64~Hz/16~ms.
-The results we obtained are shown in table \ref{TblSuccessRate}.
 
-\begin{table*}[htbp]
-\centering
-\begin{tabular}{|r|r|r|r|r|}
-\hline
-Setup & Moderate & High & Very High & Extreme \\
-\hline
-\multicolumn{5}{|l|}{Channel Check Rate = 8 Hz}\\
-\hline
-NODES & & & & \\
-packets lost & 121 & 190 & 1086 & 3190 \\
-packets transmitted & 4879 & 4810 & 3914 & 1810 \\
-success rate & 97.58\% & 96.20\% & 78.28\% & 36.20\% \\
-ROUTER & & & & \\
-packets lost & 2394 & 3167 & 3194 & 1778 \\
-packets transmitted & 2485 & 1641 & 722 & 32 \\
-success rate & 49.70\% & 32.82\% & 14.44\% & 0.64\% \\
-\hline
-\multicolumn{5}{|l|}{Channel Check Rate = 16 Hz}\\
-\hline
-NODES & & & & \\
-packets lost & 14 & 48 & 173 & 2532 \\
-packets transmitted & 4986 & 4952 & 4827 & 2468 \\
-success rate & 99.72\% & 99.04\% & 96.54\% & 49.36\% \\
-ROUTER & & & & \\
-packets lost & 39 & 1029 & 3724 & 2042 \\
-packets transmitted & 4947 & 3922 & 1106 & 434 \\
-success rate & 98.94\% & 78.44\% & 22.12\% & 8.68\% \\
-\hline
-\multicolumn{5}{|l|}{Channel Check Rate = 32 Hz}\\
-\hline
-NODES & & & & \\
-packets lost & 0 & 3 & 41 & 1668 \\
-packets transmitted & 5000 & 4997 & 4959 & 3332 \\
-success rate & 100\% & 99.94\% & 99.18\% & 66.64\% \\
-ROUTER & & & & \\
-packets lost & 0 & 0 & 641 & 3048 \\
-packets transmitted & 5000 & 4996 & 4316 & 299 \\
-success rate & 100\% & 99.92\% & 86.32\% & 5.98\% \\
-\hline
-Setup & Moderate & High & Very High & Extreme \\
-\hline
-\end{tabular}
-\caption{Rate of packets arrived to their destination,
-         according to the ContikiMAC channel check rate.\\
-         Results obtained with fixed packet number simulations.}
-\label{TblSuccessRate}
-\end{table*}
+The results we obtained are shown in figures \ref{FigSuccessRate8Hz} to
+\ref{FigSuccessRateSCoSenS}. These figures show the rates of packets
+successfully arrived to their destination, according to the duty cycle
+duration (with ContikiMAC: via changing the channel check rate parameter).
+These results are obtained with fixed packet number simulations.
 
-The data shown in table \ref{TblSuccessRate} shows us many facts:
+\begin{figure}
+  \centering
+  \includegraphics[width=7.5cm]{graphes/QoS8Hz.png}
+  \caption{QoS results for 125~ms duty cycle}
+  \label{FigSuccessRate8Hz}
+\end{figure}
+\begin{figure}
+  \centering
+  \includegraphics[width=7.5cm]{graphes/QoS16Hz.png}
+  \caption{QoS results for 62~ms duty cycle}
+  \label{FigSuccessRate16Hz}
+\end{figure}
+\begin{figure}
+  \centering
+  \includegraphics[width=7.5cm]{graphes/QoS32Hz.png}
+  \caption{QoS results for 31~ms duty cycle}
+  \label{FigSuccessRate32Hz}
+\end{figure}
+\begin{figure}
+  \centering
+  \includegraphics[width=7.5cm]{graphes/QoSstabilitySCoSenS.png}
+  \caption{Combined QoS results for S-CoSenS,
+           according to duty cycle duration}
+  \label{FigSuccessRateSCoSenS}
+\end{figure}
+
+The data shown in figures \ref{FigSuccessRate8Hz} to
+\ref{FigSuccessRateSCoSenS} show us many facts:
 
 \begin{itemize}
 
@@ -604,9 +581,17 @@ The data shown in table \ref{TblSuccessRate} shows us many facts:
 \item S-CoSenS QoS results are either similar or better than ContikiMAC's.
 
 \item S-CoSenS QoS results are much more stable when the duty cycle duration
-      changes than ContikiMAC's: thus, S-CoSenS performance is much more
+      changes than ContikiMAC's: this stability is clearly visible on figure
+      \ref{FigSuccessRateSCoSenS}; thus, S-CoSenS performance is much more
       predictable, and gives most of the time the insurance of a fair
       rate of successfully transmitted packets.
+
+\end{itemize}
+
+Analysis of the QoS results, not visible on the figures presented here, has
+also shown us that :
+
+\begin{itemize}
 
 \item With ContikiMAC, the packet losses are mainly due to the router.
 
@@ -615,16 +600,58 @@ The data shown in table \ref{TblSuccessRate} shows us many facts:
 
 \end{itemize}
 
+This is not surprising, since S-CoSenS explicitly reserves a period in every
+duty cycle for packet (re)transmission, while ContikiMAC doesn't provide
+such a feature. We can clearly understand that under heavy network load,
+a ContikiMAC router will have data to receive almost every time it wakes up
+its radio transceiver; thus, it will become increasingly difficult for this
+router to be able to retransmit the packet it receives with each increase
+of the network traffic. That's why under such scenarii, the router node
+is clearly the weak point for ContikiMAC setups, while S-CoSenS manages
+to avoid these difficulties by design.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Delays}
+\subsection{End-to-end Transmission Delays}
 
 Using the results of the same experiments, we analyzed the traces of
 exchanged packets during simulations, and computed the delays that takes each
 successfully transmitted packet to go from its originating leaf node up to
 the sink---that is: the duration of its two-hop transmission.
 
-The results we obtained are shown in figure xx.
+The results we obtained are shown in figures \ref{FigDelays8Hz} to
+\ref{FigDelaysSCoSenS}. These figures show the mean delay for
+a successfully transferred packet to make its all of its two-hop trip.
+Note that figures \ref{FigDelays8Hz}, \ref{FigDelays16Hz} and
+\ref{FigDelays32Hz} show the delays---in their vertical axis---in
+logarithmic scale, for better readability.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=7.5cm]{graphes/Delays8Hz.png}
+  \caption{Transmission delay means for 125~ms duty cycle}
+  \label{FigDelays8Hz}
+\end{figure}
+\begin{figure}
+  \centering
+  \includegraphics[width=7.5cm]{graphes/Delays16Hz.png}
+  \caption{Transmission delay means for 62~ms duty cycle}
+  \label{FigDelays16Hz}
+\end{figure}
+\begin{figure}
+  \centering
+  \includegraphics[width=7.5cm]{graphes/Delays32Hz.png}
+  \caption{Transmission delay means for 31~ms duty cycle}
+  \label{FigDelays32Hz}
+\end{figure}
+\begin{figure}
+  \centering
+  \includegraphics[width=7.5cm]{graphes/DelaysStabilitySCoSenS.png}
+  \caption{Combined Transmission delay means for S-CoSenS,
+           according to duty cycle duration}
+  \label{FigDelaysSCoSenS}
+\end{figure}
 
 These results also indicate that:
 
@@ -642,6 +669,28 @@ These results also indicate that:
 
 These observation are strictly similar to those made for QoS results.
 
+This very large increase in end-to-end transmission delays for ContikiMAC
+can be interpreted as ``overzealousness'': a packet can be retransmitted
+during a fixed number of retries (8 in our setups, 3 by default in Contiki);
+since for ContikiMAC+CSMA/CA, an attempt to transmit a packet can be delayed
+up until the radio medium is available, and consists in trying to send
+a packet repetitively up to a whole duty cycle, a enormous amount of time
+is elapsed before the protocol finally gives up on transmitting a given
+packet.
+
+While such an ``obstinacy'' can improve QoS by increasing transmission
+success rate, it also eventually greatly increases the mean delay for
+end-to-end packet transmission. In the end, one can wonder about the
+interest of transmitting packets with such a great age, at the expense
+of transmitting packets with more recent and meaningful data.
+
+The configuration of the amount of retries to perform for a given
+transmission is---like many other parameters---a balance between two
+contradictory goals: the aim is to have a sufficient TX success rate (QoS)
+while also allowing the loss and discarding of too old data. It seems
+that in the scenarii we studied, S-CoSenS manages to obtain a better
+trade-off between these two goals than ContikiMAC+CSMA/CA couple.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -655,28 +704,49 @@ to run these tests on actual hardware.
 Moreover, we constated, during our simulations, an anomaly in the MSPSim
 software (the MSP430 device simulator used by Cooja to emulate MSP430-based
 motes at the cycle level \cite{MSPSim}): \emph{the delay used by the
-simulator to load our large---around 110 bytes---IEEE 802.15.4 packets into
-the CC2420 transceiver TX buffer is too long;} it takes around 3~milliseconds
-to load such a packet to the transceiver in simulation, while our tests
-on the real Zolertia Z1 hardware have explicitely and undoubtly shown that
-loading times are actually about 1~millisecond long. The problem seems
-to be caused by an overestimation of the delays caused by the operation
-of the SPI bus that links the MSP430 microcontroller to the CC2420
-radio transceiver on the Z1 hardware.
-We didn't have time to further investigate the problem and correct
-that anomaly.
+simulator to load our large---110 bytes---IEEE 802.15.4 packets into
+the CC2420 transceiver TX buffer is too long;} Table \ref{TblTXPktLoadDelays}
+show the differences of delay for loading our packets between
+Cooja simulations and real hardware executions.
+
+\begin{table}
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+Setup     &  Cooja Sim.  & Hardware Test \\
+\hline
+RIOT OS    &   36 ticks  &  14 ticks \\ 
+Contiki OS &   14 ticks  &   7 ticks \\
+\hline
+\end{tabular}
+\caption{Delays observed for loading packets into CC2420 TX buffer.\\
+Values are given in ``ticks'' of \texttt{rtimer/hwtimer}, both of these
+timers incrementing at a rate of 32,768Hz. The unit is thus a fixed period
+of time equal to about 30.5 microseconds.}
+\label{TblTXPktLoadDelays}
+\end{table}
+
+We can see that this problem occurs whatever OS is used on the motes.
+This problem seems to be caused by an overestimation of the delays caused
+by the operation of the SPI bus that links the MSP430 microcontroller
+to the CC2420 radio transceiver on the Z1 hardware. We didn't have time
+to further investigate the problem and correct that anomaly.
 
 We also don't know whether or not there are other inconsistencies in
 the simulator software that could also alter the results of our
 simulations...
 
-Such anomalies will probably change the results obtained on real
+Such anomalies may have an impact, and change the results obtained on real
 hardware using the same scenarii and parameters. Unfortunately, we don't
 have enough Z1 motes nor time to perform these real-life tests yet.
 
-However, we firmly believe that the general facts we observed in our
-simulations won't be overturned by these problems. That's why we still
-present them in the current article.
+However, since the delay overestimation seems quite larger for RIOT OS
+operation than for Contiki (for a reason that is still unexplained to us),
+we can expect the results on real hardware to improve further for RIOT OS
+than for Contiki compared to what we obtained by simulation. Consequently,
+we firmly believe that the general facts we observed in our simulations
+won't be overturned by these problems. That's why we still present
+them in the current article.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
