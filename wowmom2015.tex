@@ -47,8 +47,6 @@
 %Std 802.15.4 : délai entre réception d'un paquet et envoi d'un acquittement
 %entre deux paquets successifs => rarement respectés.
 
-%Lessons learned during protocol implementations... (Experience report)
-
 
 \abstract{Implementing new, high-performance MAC/RDC protocols requires
 real-time features, to be able to synchronize correctly between different
@@ -328,15 +326,23 @@ cycle the length of SP and WP, according to the number of retransmitted
 packets during previous cycles.
 
 Moreover, the computation of WP duration follows a ``sliding average''
-algorithm, where WP duration average for each duty cycle is computed as:
+algorithm, where WP average for each duty cycle is computed as:
 \begin{displaymath}
 \overline{\mathrm{WP}_{n}} = \alpha \cdot \overline{\mathrm{WP}_{n-1}}
                 + (1 - \alpha) \cdot \mathrm{WP}_{n-1}
 \end{displaymath}
+\begin{displaymath}
+\mathrm{WP}_{n} = \max ( \mathrm{WP}_{min},
+                  \min ( \overline{\mathrm{WP}_{n}}, \mathrm{WP}_{max} ) )
+\end{displaymath}
 where $\overline{\mathrm{WP}_{n}}$ and $\overline{\mathrm{WP}_{n-1}}$
 are respectively the average WP length at $n^{\mathrm{th}}$ and
-$(n-1)^{\mathrm{th}}$ cycle, and $\mathrm{WP}_{n-1}$ is the actual
-length of the $(n-1)^{\mathrm{th}}$ cycle.
+$(n-1)^{\mathrm{th}}$ cycle, while $\mathrm{WP}_{n}$ and $\mathrm{WP}_{n-1}$
+are the actual length of respectively the $n^{\mathrm{th}}$ and
+$(n-1)^{\mathrm{th}}$ cycles; $\alpha$ is an arbitrary value representing
+the relative weight of the history in the computation, and
+$\mathrm{WP}_{min}$ and $\mathrm{WP}_{max}$ are high and low limits
+imposed by the programmer to the WP duration.
 
 The local synchronization between a S-CoSenS router and the other nodes
 of its PAN is done thanks to a beacon packet, that is broadcasted by
