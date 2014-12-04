@@ -21,10 +21,9 @@
 
 \author{
 \IEEEauthorblockN{K\'evin Roussel, Ye-Qiong Song and Olivier Zendra}
-\IEEEauthorblockA{LORIA/INRIA Nancy Grand-Est,\\
-             Universit\'e de Lorraine,\\
-             615, rue du Jardin Botanique,\\
-             54600 Villers-L\`es-Nancy, France\\
+\IEEEauthorblockA{Universit\'e de Lorraine~/ LORIA~/ INRIA Nancy Grand-Est,\\
+                  615, rue du Jardin Botanique,\\
+                  54600 Villers-l\`es-Nancy, France\\
 Email: \texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}}
 }
 
@@ -49,8 +48,8 @@ sensor networks (WSN) that are designed to be part of the Internet of Things
 (IoT). Unfortunately the operating systems commonly used in this domain
 cannot provide such features.\\
 In this article, we describe our implementation of a high-performance MAC/RDC
-protocol, S-CoSenS, on RIOT OS, a real-time operating system for wireless
-sensor networks (WSN) and the Internet of Things (IoT).\\
+protocol, S-CoSenS, on RIOT OS, a real-time operating system for Wireless
+Sensor Networks (WSN) and the Internet of Things (IoT).\\
 We then evaluate the performances of our implementation, by comparing it with
 the well-known ContikiMAC protocol (running on Contiki OS), through
 simulations running on the Cooja emulator. We focus on QoS results,
@@ -60,8 +59,8 @@ improvements over ContikiMAC results under a large spectrum of network loads
 and configurations.
 \end{abstract}
 
-
 \IEEEpeerreviewmaketitle
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -312,7 +311,6 @@ destined to a same receiver. This is implemented thanks to a keep-in-wakeup
 timeout period (KTO) observed by ContikiMAC after each packet reception
 (as shown in figures \ref{FigContikiMACDutyCycle} and
 \ref{FigContikiMACPhaseLock}).
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -579,20 +577,20 @@ nodes: they were programmed to generate large 802.15.4 network packets
 111 bytes) at a fixed rate, with random jitters in the interval of
 $[ 0.5 L , 1.5  L ]$, with $L$ being the targeted inter-arrival
 period. The different setups are described in table \ref{TblDataRates}:
-the table gives the average inter-arrival period between two consecutive
-packets sent by each mote, the average number of packets emitted every
-second for the 10 leaf nodes, and the expected resulting data rate.
+the table gives the arrival interval between two consecutive packets sent
+by each mote (PAI), the average number of packets emitted every second
+for all of the 10 leaf nodes, and the expected resulting data rate.
 
 \begin{table}[htb]
 \centering
-\begin{tabular}{|l|p{1.25cm}|r|r|}
+\begin{tabular}{|l|r|r|r|}
 \hline
-Setup     &  Inter-Arrival  & Pkts/s & Data Rate \\
+Setup     & Inter-Arrival & Packets/s & Data Rate \\
 \hline
-Moderate  & 1500 ms &   6.7  &  5,867 bit/s \\ 
-High      & 1000 ms &  10    &  8,800 bit/s \\
-Very High &  500 ms &  20    & 17,600 bit/s \\
-Extreme   &  100 ms & 100    & 88,000 bit/s \\
+Moderate  &    1500 ms    &    6.7    &  5,867 bit/s \\ 
+High      &    1000 ms    &   10      &  8,800 bit/s \\
+Very High &     500 ms    &   20      & 17,600 bit/s \\
+Extreme   &     100 ms    &  100      & 88,000 bit/s \\
 \hline
 \end{tabular}
 \caption{Transmission data rates used on leaf nodes.}
@@ -628,15 +626,27 @@ Using the \emph{fixed packet number simulations}, we can easily compute the
 rate of packets that arrive to destination, compared to the known number
 of packets emitted by the nodes.
 
-Thus, we were able to determine that the only parameter that has actually
-influence on the PRR is the length of the subframe on S-CoSenS, whose
-equivalent in the ContikiMAC RDC protocol is the \emph{wake-up interval}
-(or \emph{check interval}). This interval is actually configured, at the
-implementation level, by changing the rate at which the radio medium is
-sensed (this parameter, in Contiki source code, is a \texttt{\#define} named
+Thus, we were able to determine that \emph{the only parameter common to
+both protocols} that has actually influence on the PRR is the length of
+the subframe on S-CoSenS, whose equivalent in the ContikiMAC RDC protocol
+is the \emph{wake-up interval} (or \emph{check interval}). This interval
+is actually configured, at the implementation level, by changing the rate
+at which the radio medium is sensed (this parameter, in Contiki source code,
+is a \texttt{\#define} named
 \texttt{NETSTACK\_CONF\_RDC\_CHANNEL\_CHECK\_RATE}).
 Its default value is 8, meaning the radio channel is checked eight times
 per second; this parameter is actually given in Hertz.
+
+S-CoSenS also offers another parameter that allows to finely tune the
+balance between QoS and duty cycle: the $\mathrm{WP}_{min}$ and
+$\mathrm{WP}_{max}$ values that allow to limit the WP weight in the
+S-CoSenS cycles to stay within a specific interval. More specifically,
+increasing the value of $\mathrm{WP}_{min}$ allows to ensure that PRR
+will never go below a high level. For our simulations, since we're
+primarily interested in maintaining an high QoS, we systematically
+set $\mathrm{WP}_{max} = \mathrm{PAI}$ and $\mathrm{WP}_{min}
+= 0.5 \cdot \mathrm{PAI}$, with PAI being the packet arrival
+interval for the given simulation.
 
 Note that we also allowed, on Contiki, the the standard CSMA/CA MAC layer
 to perform up to seven retries for a given data packet, by setting the
@@ -653,8 +663,8 @@ of the fundamental difference in design between the two protocols
 (see section \ref{SectProtoDescription} above).
 
 This default value of 8~Hz/125~ms only gives very poor results for ContikiMAC.
-To obtain fairer results for the latter protocol, we changed that parameter's
-value, and doubled it up to 64~Hz/16~ms.
+To obtain fairer results for this latter protocol, we changed that
+parameter's value, and doubled it up to 32~Hz/31~ms.
 
 The results we obtained are shown in figures \ref{FigSuccessRate8Hz} to
 \ref{FigSuccessRateSCoSenS}. These figures show the rates of packets
@@ -693,9 +703,11 @@ The data shown in figures \ref{FigSuccessRate8Hz} to
 
 \begin{itemize}
 
-\item ContikiMAC PRR increases with Channel Check Rate.
+\item ContikiMAC PRR increases significantly with the Channel Check Rate
+      (that is: when Channel Check Interval diminishes).
 
-\item S-CoSenS PRR results are either similar or better than ContikiMAC's.
+\item S-CoSenS PRR results are either similar or better than ContikiMAC's
+      in every scenario.
 
 \item S-CoSenS PRR results are much more stable when the subframe duration
       changes than ContikiMAC PRR when changing check rate: this stability
@@ -827,6 +839,170 @@ allowing the loss and discarding of too old data that have lost its
 interest. It seems that in the scenarii we studied, S-CoSenS manages
 to obtain a better trade-off between these two goals than ContikiMAC.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Duty Cycles}
+
+Using the \emph{fixed duration simulations}, we can easily have Cooja compute
+the accurate duty cycle statistics for all of the virtual motes simulated.
+These statistics are a strong indicator for quantifying energy consumption,
+since the radio transceiver is, by far, the most energy-consuming hardware
+in the motes that constitue WSNs.
+
+The results we obtained for duty cycle statistics are presented in tables
+\ref{TblDutyCyclesContikiMAC} and \ref{TblDutyCyclesSCoSenS}.
+
+%%% ContikiMAC duty cycles
+\begin{table}
+\centering
+\begin{tabular}{|l|r|r|r|r|}
+\hline
+ & \multicolumn{4}{|c|}{PACKET ARRIVAL INTERVAL}\\
+\hline
+ & 1500 ms & 1000 ms & 500 ms & 100 ms \\
+\hline
+
+\multicolumn{5}{|c|}{Channel Check Interval = 125~ms}\\
+\hline
+ ROUTER & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 8.62\% & 11.12\% & 14.98\% & 26.99\% \\
+Radio TX           & 1.35\% &  1.50\% &  1.33\% &  1.38\% \\
+Radio RX           & 2.55\% &  3.66\% &  5.77\% & 12.33\% \\
+Radio Interference & 0.93\% &  1.27\% &  1.61\% &  1.58\% \\
+\hline
+ NODES (average) & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 3.38\% & 3.87\% & 4.79\% & 6.11\% \\
+Radio TX           & 1.42\% & 1.65\% & 2.21\% & 2.93\% \\
+Radio RX           & 0.19\% & 0.22\% & 0.26\% & 0.40\% \\
+Radio Interference & 0.15\% & 0.18\% & 0.23\% & 0.24\% \\
+\hline
+
+\multicolumn{5}{|c|}{Channel Check Interval = 62~ms}\\
+\hline
+ ROUTER & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 11.55\% & 15.41\% & 21.12\% & 42.53\% \\
+Radio TX           &  2.60\% &  3.22\% &  2.25\% &  8.91\% \\
+Radio RX           &  2.74\% &  4.05\% &  7.30\% & 17.87\% \\
+Radio Interference &  0.39\% &  1.26\% &  2.59\% &  3.68\% \\
+\hline
+ NODES (average) & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 4.16\% & 6.56\% & 8.80\% & 10.69\% \\
+Radio TX           & 1.11\% & 2.15\% & 3.21\% &  4.22\% \\
+Radio RX           & 0.47\% & 0.70\% & 0.82\% &  0.99\% \\
+Radio Interference & 0.14\% & 0.43\% & 0.75\% &  0.85\% \\
+\hline
+
+\multicolumn{5}{|c|}{Channel Check Interval = 31~ms}\\
+\hline
+ ROUTER & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 12.77\% & 17.85\% & 31.13\% & 58.76\% \\
+Radio TX           &  2.64\% &  4.00\% &  6.88\% &  4.16\% \\
+Radio RX           &  2.78\% &  4.18\% &  8.24\% & 23.02\% \\
+Radio Interference &  0.16\% &  0.40\% &  2.64\% &  6.64\% \\
+\hline
+ NODES (average) & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 5.61\% & 7.45\% & 14.27\% & 18.20\% \\
+Radio TX           & 0.90\% & 1.48\% &  3.89\% &  5.54\% \\
+Radio RX           & 0.66\% & 1.03\% &  1.96\% &  2.32\% \\
+Radio Interference & 0.11\% & 0.21\% &  1.13\% &  1.63\% \\
+
+\hline
+\end{tabular}
+\caption{Duty Cycle Statistics for ContikiMAC.}
+\label{TblDutyCyclesContikiMAC}
+\end{table}
+
+%%% S-CoSenS duty cycles
+\begin{table}
+\centering
+\begin{tabular}{|l|r|r|r|r|}
+\hline
+ & \multicolumn{4}{|c|}{PACKET ARRIVAL INTERVAL}\\
+\hline
+ & 1500 ms & 1000 ms & 500 ms & 100 ms \\
+\hline
+
+\multicolumn{5}{|c|}{Subframe Duration = 125~ms}\\
+\hline
+ ROUTER & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 75.60\% & 79.01\% & 76.18\% & \\
+Radio TX           &  4.20\% &  4.70\% &  8.26\% & \\
+Radio RX           &  3.92\% &  4.53\% &  8.90\% & \\
+Radio Interference &  0.86\% &  1.25\% &  4.29\% & \\
+\hline
+ NODES (average) & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 9.02\% & 11.45\% & 27.37\% & \\
+Radio TX           & 0.55\% &  0.68\% &  1.70\% & \\
+Radio RX           & 0.97\% &  1.32\% &  5.48\% & \\
+Radio Interference & 0.14\% &  0.23\% &  1.70\% & \\
+\hline
+
+\multicolumn{5}{|c|}{Subframe Duration = 62~ms}\\
+\hline
+ ROUTER & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 67.84\% & 70.47\% & 76.24\% & \\
+Radio TX           &  4.52\% &  5.03\% &  8.78\% & \\
+Radio RX           &  3.82\% &  4.45\% &  9.05\% & \\
+Radio Interference &  0.91\% &  1.31\% &  4.75\% & \\
+\hline
+ NODES (average) & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 6.78\% & 8.73\% & 23.27\% & \\
+Radio TX           & 0.53\% & 0.66\% &  1.76\% & \\
+Radio RX           & 0.74\% & 1.03\% &  4.45\% & \\
+Radio Interference & 0.12\% & 0.20\% &  1.56\% & \\
+\hline
+
+\multicolumn{5}{|c|}{Subframe Duration = 31~ms}\\
+\hline
+ ROUTER & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 66.22\% & 67.56\% & 67.91\% & \\
+Radio TX           &  4.96\% &  5.48\% &  8.43\% & \\
+Radio RX           &  3.84\% &  4.43\% &  8.90\% & \\
+Radio Interference &  1.04\% &  1.48\% &  8.39\% & \\
+\hline
+ NODES (average) & \multicolumn{4}{|c|}{ }\\
+\hline
+Transceiver Active & 6.15\% & 7.68\% & 40.04\% & \\
+Radio TX           & 0.58\% & 0.70\% &  2.64\% & \\
+Radio RX           & 0.68\% & 0.93\% &  7.08\% & \\
+Radio Interference & 0.16\% & 0.22\% &  3.98\% & \\
+
+\hline
+\end{tabular}
+\caption{Duty Cycle Statistics for S-CoSenS.}
+\label{TblDutyCyclesSCoSenS}
+\end{table}
+
+These duty cycle results clearly show that ContikiMAC has here a significant
+advantage. Transceiver activity rates and reception time (``radio RX'')
+are always lower---that is: better---for ContikiMAC than for S-CoSenS.
+
+For transceiver activity on router nodes, the difference is particularily
+dramatic, mainly because we defined the $\mathrm{WP}_{min}$ parameter
+to a high value (half of the inter-arrival period) to ensure good PRR.
+
+ContikiMAC proves here that it is indeed a \emph{very low power protocol}.
+
+The only mitigation to this constatation comes from the transmission time
+rate (``radio TX''): for the leaf nodes---but not the routers---they are
+systematically lower/better for S-CoSenS than for ContikiMAC. This is
+easily explained by the design of both these protocols: S-CoSenS being
+designed using the RI paradigm, it naturally implies less packet
+transmissions than ContikiMAC, which is designed using the LPL
+paradigm (and more especially, the continuous emission of the
+whole data packets until acknowledgement by the receiver).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -849,10 +1025,10 @@ our packets between Cooja simulations and real hardware executions.
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
-Setup     &  Cooja Sim.  & Hardware Test \\
+Operating System     &  Cooja Sim.  & Hardware Test \\
 \hline
-RIOT OS    &   89 ticks  &  14 ticks \\ 
-Contiki OS &   32 ticks  &   7 ticks \\
+RIOT OS              &   89 ticks   &  14 ticks \\ 
+Contiki OS           &   32 ticks   &   7 ticks \\
 \hline
 \end{tabular}
 \caption{Delays observed for loading packets into CC2420 TX buffer.\\
@@ -897,6 +1073,19 @@ we also think these results on real hardware will improve further
 for RIOT OS than for Contiki compared to what we obtained by simulation;
 this would then reinforce the advantage we noticed for S-CoSenS for
 QoS matters (PRR and TX delays).
+
+Concerning duty cycle statistics, ContikiMAC has a large advantage over
+S-CoSenS. Here again, there is a balance between the two contradictory
+objectives that are obtaining a high QoS and low duty cycles. By design,
+ContikiMAC is clearly more oriented to the latter objective than S-CoSenS,
+even it is possible to lower the $\mathrm{WP}_{min}$ parameter to push
+our protocol more towards that same objective (cf section
+\ref{SectProtoDescription}).
+
+Still, observing ContikiMAC and its working makes us think that we could
+achieve lower (better) duty cycles for S-CoSenS leaf nodes by implementing
+a mechanism similar to ContikiMAC's ``phase lock'' described above. This
+shall be the subject of one of our future experiments.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
