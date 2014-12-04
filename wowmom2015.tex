@@ -87,8 +87,7 @@ for quite a long time.
 The current reference OS in the domain of WSN and IoT is \emph{Contiki}
 \cite{ContikiOS}. It is an open-source OS, which was first released
 in 2002. It is also at the origin of many assets: we can mention, among
-others, the uIP Embedded TCP/IP Stack \cite{uip}, that has been extended
-to uIPv6, the low-power Rime network stack \cite{Rime}, or the Cooja
+many others, the low-power Rime network stack \cite{Rime}, or the Cooja
 advanced network simulator \cite{Cooja}.
 
 Contiki is very lightweight and well adapted to motes and
@@ -111,8 +110,9 @@ on the IEEE 802.15.4 physical wireless/radio protocol.
 
 \bigskip
 
-However, the Contiki OS also has some limitations that prevented us from
-using it as our software platform.
+However, Contiki's extremely compact footprint and high optimization comes
+at the cost of some limitations that prevented us from using it as our
+software platform.
 
 Contiki OS is indeed not a real-time OS: the processing of ``events''---using
 Contiki's terminology---is made by using the kernel's scheduler, which is
@@ -145,7 +145,7 @@ Consequently, we focused our interest on \emph{RIOT OS} \cite{RIOT}.
 
 This new system---first released in 2013---is also open-source and
 specialized in the domain of low-power, embedded wireless sensors.
-It offers many interesting features, that we will now describe.
+It offers many useful features, that we will now describe.
 
 It provides the basic benefits of an OS: portability (it has been ported
 to many devices powered by ARM, MSP430, and---more recently---AVR
@@ -159,9 +159,10 @@ the WSN/IoT domain, the most important for us being:
       pre-emptive multitasking;
 \item a highly efficient use of \emph{hardware timers}: all of them can be
       used concurrently (especially since the kernel is tickless), offering
-      the ability to schedule actions with high granularity; on low-end
+      the ability to schedule actions with high precision; on low-end
       devices, based on MSP430 architecture, events can be scheduled
-      with a resolution of 30~microseconds;
+      with a resolution of 30~microseconds, instead of 8000~microseconds
+      for Contiki OS.
 \end{itemize}
 These features are what make RIOT a full-fledged \emph{real-time} operating
 system.
@@ -169,8 +170,8 @@ system.
 Thus, RIOT is a powerful real-time operating system, adapted to the
 limitations of deeply embedded hardware microcontrollers, while offering
 state-of-the-art techniques (preemptive multitasking, tickless scheduler,
-optimal use of hardware timers) that---we believe---makes it on par with
-the best OSes of the embedded and real-time world.
+optimal use of hardware timers) that---we believe---makes it one of
+the most suitable OSes of the embedded and real-time world.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -180,22 +181,22 @@ the best OSes of the embedded and real-time world.
 
 \subsection{The ContikiMAC RDC protocol}
 
-It is currently the default RDC protocol proposed by the Contiki OS, and
-thus it has become a \textit{de facto} standard in the WSN community.
+It is currently the default RDC protocol proposed by the Contiki OS.
 This protocol is designed to work under the classical CSMA/CA MAC layer,
 and is based on the \emph{Low-Power Listening} (LPL) paradigm.
 
 It is technically a derivative of the classical X-MAC protocol \cite{XMAC}:
-its basic principle, fundamentally asynchronous, is that every node keep
+its basic principle, fundamentally asynchronous, is that every node keeps
 its radio transceiver off as much as possible, only waking it up for short
 delay of radio medium listening at a fixed rate (by default, eight times
 per second in ContikiMAC). If, during the short amount of time the radio
 transceiver is on, data is sensed on the medium, the radio transceiver
 is kept on until the whole transmission is done; otherwise, the node
-goes back into ``radio silence mode'' to spare energy.
+goes back into ``radio silence mode'' to save energy.
 This ability to automatically adapt the duration of transceiver activity
 to the live traffic on radio channel is what makes ContikiMAC a
-\emph{auto-adaptative} (or \emph{self-adaptative}) protocol.
+\emph{traffic auto-adaptative} (or \emph{self-adaptative}) protocol,
+at least up to a certain extent.
 
 When a node has to emit a packet, it continuously emits it until the
 intended receiver nodes ``wakes up'' its radio transceiver, receives
@@ -212,41 +213,49 @@ and acknowledge the data packet as soon as its radio is ready (see figure
 \centering
 \begin{tikzpicture}[>=latex]
 %sender
-\draw[->] (0,  1cm) -- +(5cm, 0);
-\draw[anchor=west] (5cm, 1cm) node {Node A};
-\fill[gray] (1.4cm, 1cm) rectangle +(2.75cm, 0.6cm);
+\draw[->] (0,  1cm) -- +(5.5cm, 0);
+\draw[anchor=west] (5.5cm, 1cm) node {Node A};
+\fill[gray] (1.9cm, 1cm) rectangle +(2.75cm, 0.6cm);
+%packet ready to send
+\draw[->,very thick] (1.9cm, 2.5cm) -- +(0, -1cm);
+\draw[anchor=west] (1.7cm, 2.7cm)
+     node {\footnotesize \textbf{packet arrival (to MAC layer)}};
 %receiver
-\draw[->] (0, -0.5cm) -- +(5cm, 0);
-\draw[anchor=west] (5cm, -0.5cm) node {Node B};
+\draw[->] (0, -0.5cm) -- +(5.5cm, 0);
+\draw[anchor=west] (5.5cm, -0.5cm) node {Node B};
 %wakeup times
 \fill[gray] (0.5cm, -0.5cm) rectangle +(0.15cm, 0.6cm);
-\fill[gray] (3.4cm, -0.5cm) rectangle +(0.75cm, 0.6cm);
+\fill[gray] (1cm, -0.5cm) rectangle +(0.15cm, 0.6cm);
+\fill[gray] (3.9cm, -0.5cm) rectangle +(0.9cm, 0.6cm);
+\draw[anchor=west] (4.4cm, 0.25cm) node {\scriptsize \textbf{KTO}};
 %packet sent
 \foreach \x in {1,2,3,4,5}
 {
-  \fill[black] (1cm + \x * 0.5cm, 1cm) rectangle +(0.3cm, 0.5cm);
+  \fill[black] (1.5cm + \x * 0.5cm, 1cm) rectangle +(0.3cm, 0.5cm);
 }
 %packet received
-\fill[black] (3.5cm, -0.5cm) rectangle +(0.3cm, 0.5cm);
-\draw[->,thick] (3.65cm, 1cm) -- +(0, -1cm);
+\fill[black] (4cm, -0.5cm) rectangle +(0.3cm, 0.5cm);
+\draw[->,thick] (4.15cm, 1cm) -- +(0, -1cm);
 %ACK
-\fill[black] (3.9cm, -0.5cm) rectangle +(0.1cm, 0.5cm);
-\draw[->,thick] (3.95cm, 0cm) -- +(0, 1cm);
-\fill[black] (3.9cm, 1cm) rectangle +(0.1cm, 0.5cm);
+\fill[black] (4.4cm, -0.5cm) rectangle +(0.1cm, 0.5cm);
+\draw[->,thick] (4.45cm, 0cm) -- +(0, 1cm);
+\fill[black] (4.4cm, 1cm) rectangle +(0.1cm, 0.5cm);
 %brace
-\draw (0.5cm, -0.75cm) .. controls +(0, -0.25cm) .. +(0.9cm, -0.25cm);
-\draw (1.4cm, -1cm)    .. controls +(0.9cm, 0)   .. +(0.9cm, -0.25cm);
-\draw (2.3cm, -1.25cm) .. controls +(0, 0.25cm)  .. +(0.9cm, 0.25cm);
-\draw (3.2cm, -1cm)    .. controls +(0.9cm, 0)   .. +(0.9cm, 0.25cm);
+\draw (0.5cm, -0.75cm) .. controls +(0, -0.25cm) .. +(1cm, -0.25cm);
+\draw (1.5cm, -1cm)    .. controls +(1cm, 0)     .. +(1cm, -0.25cm);
+\draw (2.5cm, -1.25cm) .. controls +(0, 0.25cm)  .. +(1cm, 0.25cm);
+\draw (3.5cm, -1cm)    .. controls +(1cm, 0)     .. +(1cm, 0.25cm);
 %brace legend
 \draw[anchor=north] (2.2cm,-1.25cm) node {Node B Duty Cycle};
 \end{tikzpicture}
-\caption{Transmission of a data packet with the ContikiMAC protocol.}
+\caption{Transmission of a data packet with the ContikiMAC protocol.\\
+         Gray boxes represent radio transceiver activation, while
+         black boxes represent packets' transmissions.}
 \label{FigContikiMACDutyCycle}
 \end{figure}
 
 The second specificity is the presence of an optimization mechanism named
-``transmission phase lock'': senders note the time when they receive
+\emph{``transmission phase lock''}: senders note the time when they receive
 acknowledgement from receivers, and according to the known rate of radio
 wake-up, deduce the subsequent expected times when these receivers are
 supposed to be ready to receive packets. Thus, senders can synchronize
@@ -260,28 +269,33 @@ hereafter.
 \centering
 \begin{tikzpicture}[>=latex]
 %sender
-\draw[->] (0,  1cm) -- +(5cm, 0);
-\draw[anchor=west] (5cm, 1cm) node {Node A};
-\fill[gray] (1.7cm, 1cm) rectangle +(0.15cm, 0.6cm);
-\fill[gray] (2.9cm, 1cm) rectangle +(1.25cm, 0.6cm);
+\draw[->] (0,  1cm) -- +(5.5cm, 0);
+\draw[anchor=west] (5.5cm, 1cm) node {Node A};
+\fill[gray] (3.4cm, 1cm) rectangle +(1.25cm, 0.6cm);
+%packet ready to send
+\draw[->,very thick] (1.9cm, 2.5cm) -- +(0, -1.5cm);
+\draw[anchor=west] (1.7cm, 2.7cm)
+     node {\footnotesize \textbf{packet arrival}};
 %receiver
-\draw[->] (0, -0.5cm) -- +(5cm, 0);
-\draw[anchor=west] (5cm, -0.5cm) node {Node B};
+\draw[->] (0, -0.5cm) -- +(5.5cm, 0);
+\draw[anchor=west] (5.5cm, -0.5cm) node {Node B};
 %wakeup times
 \fill[gray] (0.5cm, -0.5cm) rectangle +(0.15cm, 0.6cm);
-\fill[gray] (3.4cm, -0.5cm) rectangle +(0.75cm, 0.6cm);
+\fill[gray] (1cm, -0.5cm) rectangle +(0.15cm, 0.6cm);
+\fill[gray] (3.9cm, -0.5cm) rectangle +(0.9cm, 0.6cm);
+\draw[anchor=west] (4.4cm, 0.25cm) node {\scriptsize \textbf{KTO}};
 %packet sent
 \foreach \x in {4,5}
 {
-  \fill[black] (1cm + \x * 0.5cm, 1cm) rectangle +(0.3cm, 0.5cm);
+  \fill[black] (1.5cm + \x * 0.5cm, 1cm) rectangle +(0.3cm, 0.5cm);
 }
 %packet received
-\fill[black] (3.5cm, -0.5cm) rectangle +(0.3cm, 0.5cm);
-\draw[->,thick] (3.65cm, 1cm) -- +(0, -1cm);
+\fill[black] (4cm, -0.5cm) rectangle +(0.3cm, 0.5cm);
+\draw[->,thick] (4.15cm, 1cm) -- +(0, -1cm);
 %ACK
-\fill[black] (3.9cm, -0.5cm) rectangle +(0.1cm, 0.5cm);
-\draw[->,thick] (3.95cm, 0cm) -- +(0, 1cm);
-\fill[black] (3.9cm, 1cm) rectangle +(0.1cm, 0.5cm);
+\fill[black] (4.4cm, -0.5cm) rectangle +(0.1cm, 0.5cm);
+\draw[->,thick] (4.45cm, 0cm) -- +(0, 1cm);
+\fill[black] (4.4cm, 1cm) rectangle +(0.1cm, 0.5cm);
 %brace
 \draw (0.5cm, -0.75cm) .. controls +(0, -0.25cm) .. +(0.9cm, -0.25cm);
 \draw (1.4cm, -1cm)    .. controls +(0.9cm, 0)   .. +(0.9cm, -0.25cm);
@@ -290,22 +304,29 @@ hereafter.
 %brace legend
 \draw[anchor=north] (2.2cm,-1.25cm) node {Node B Duty Cycle};
 \end{tikzpicture}
-\caption{After the transmission in figure \ref{FigContikiMACDutyCycle}
-occured, node A knows when to send packets so that node B is ready
-to receive them, even though both nodes have different duty cycle phases.}
+\caption{``Transmission Phase Lock'': After the transmission in figure
+\ref{FigContikiMACDutyCycle} occured, node A knows when to send packets
+so that node B is ready to receive them, even though both nodes have
+different duty cycle phases.}
 \label{FigContikiMACPhaseLock}
 \end{figure}
+
+The third feature specific to ContikiMAC is the ability to send in
+a single \emph{burst} a whole lot of queued packets when those are all
+destined to a same receiver. This is implemented thanks to a keep-in-wakeup
+timeout period (KTO) observed by ContikiMAC after each packet reception
+(as shown in figures \ref{FigContikiMACDutyCycle} and
+\ref{FigContikiMACPhaseLock}).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Our first design: the S-CoSenS MAC/RDC protocol}
+\subsection{Our first design: the S-CoSenS RDC protocol}
 
-The first MAC~/ RDC protocol we wanted to implement is S-CoSenS, which
-is designed to work on top of the IEEE 802.15.4 physical layer. In contrast
-to ContikiMAC, which is a RDC protocol and is designed to work with the
-classical CSMA/CA MAC layer, S-CoSenS fills the role of both MAC and RDC
-layers---that's why we call it a MAC~/RDC protocol.
+The first RDC protocol we wanted to implement is S-CoSenS, which
+is designed to work on top of the IEEE 802.15.4 physical layer. Like
+ContikiMAC, it is designed to work with the classical (i.e.: beacon-less)
+CSMA/CA MAC layer.
 
 It is an evolution of the already published CoSenS protocol \cite{CosensConf}:
 it adds to the latter a sleeping period for energy saving.
@@ -316,63 +337,71 @@ is listened by routers for collecting incoming 802.15.4 packets, and
 finally a burst transmission period (TP) for emitting adequately
 the packets enqueued during WP.
 
-Note that in contrast to ContikiMAC, S-CoSenS is based on the \emph{Low-Power
-Probing} (LPP) paradigm, whose the classical RI-MAC protocol \cite{RIMAC}
-is one of the better known application.
-
 The main advantage of S-CoSenS is its ability to adapt dynamically to the
 wireless network throughput at runtime, by calculating for each radio duty
-cycle the length of SP and WP, according to the number of retransmitted
-packets during previous cycles.
+cycle the length of SP and WP, according to the number of relayed
+packets during previous cycles. Note that the set of the SP and the WP
+of a same cycle is named \emph{subframe}; it is the part of a S-CoSenS
+cycle whose length is computed and known \textit{a priori}; on the contrary,
+TP duration is always unknown up to its very beginning, because it depends
+on the amount of data successfully received during the WP that precedes it.
 
 Moreover, the computation of WP duration follows a ``sliding average''
 algorithm, where WP average for each duty cycle is computed as:
-\begin{displaymath}
+\begin{eqnarray*}
+&&
 \overline{\mathrm{WP}_{n}} = \alpha \cdot \overline{\mathrm{WP}_{n-1}}
                 + (1 - \alpha) \cdot \mathrm{WP}_{n-1}
-\end{displaymath}
-\begin{displaymath}
+\\ &&
 \mathrm{WP}_{n} = \max ( \mathrm{WP}_{min},
                   \min ( \overline{\mathrm{WP}_{n}}, \mathrm{WP}_{max} ) )
-\end{displaymath}
+\end{eqnarray*}
 where $\overline{\mathrm{WP}_{n}}$ and $\overline{\mathrm{WP}_{n-1}}$
 are respectively the average WP length at $n^{\mathrm{th}}$ and
 $(n-1)^{\mathrm{th}}$ cycle, while $\mathrm{WP}_{n}$ and $\mathrm{WP}_{n-1}$
 are the actual length of respectively the $n^{\mathrm{th}}$ and
-$(n-1)^{\mathrm{th}}$ cycles; $\alpha$ is an arbitrary value representing
-the relative weight of the history in the computation, and
-$\mathrm{WP}_{min}$ and $\mathrm{WP}_{max}$ are high and low limits
+$(n-1)^{\mathrm{th}}$ cycles; $\alpha$ is a parameter between 0 and 1
+representing the relative weight of the history in the computation,
+and $\mathrm{WP}_{min}$ and $\mathrm{WP}_{max}$ are high and low limits
 imposed by the programmer to the WP duration.
 
-The local synchronization between a S-CoSenS router and the other nodes
-of its PAN is done thanks to a beacon packet, that is broadcasted by
-the router at the beginning of each duty cycle. This beacon contains the
+The local synchronization between a S-CoSenS router and the leaf nodes
+that take it as parent is done thanks to a beacon packet, that is broadcasted
+by the router at the beginning of each duty cycle. This beacon contains the
 duration (in microseconds) of the SP and WP for the currently beginning
 duty cycle.
 
-The whole S-CoSenS duty cycle workflow for a PAN router is summarized
-in figure \ref{FigSCosensDutyCycle} hereafter.
+The whole S-CoSenS duty cycle workflow for a router is summarized in figure
+\ref{FigSCosensDutyCycle} hereafter.
 
 \begin{figure}[!h]
 \centering
 \begin{tikzpicture}[>=latex]
-\draw[->] (-1cm,  0.25cm) -- +(7.5cm, 0);
-\draw[->] (-1cm, -0.25cm) -- +(7.5cm, 0);
 %beacon
 \fill[black] (0cm, -0.25cm) rectangle +(0.2cm, 0.5cm);
 \draw[->,thick] (0.1cm, 0.25cm) -- +(0, 0.5cm);
-\draw (0.1cm, 1cm) node {Beacon};
+\draw (0.1cm, 1.3cm) node {Beacon};
+\draw[anchor=west] (-0.6cm, 0.9cm) node {(broadcasted)};
 %SP
 \draw[thick] (0cm, -0.25cm) -- +(0, 0.5cm);
-\fill[lightgray] (0.2cm, -0.25cm) rectangle +(1.8cm, 0.5cm);
-\draw (1.1cm, 0) node {SP};
+%regular wake-ups during SP
+\foreach \x in {1,2,3,4,5,6}
+{
+  \fill[lightgray] (0.2cm + \x * 0.25cm, -0.25cm) rectangle +(0.05cm, 0.5cm);
+}
+\draw (1.1cm, 0) node {\textbf{SP}};
 %WP
 \draw[thick] (2cm, -0.25cm) -- +(0, 0.5cm);
-\draw (3cm, 0) node {WP};
+\fill[lightgray] (2cm, -0.25cm) rectangle +(2cm, 0.5cm);
+\draw (3cm, 0) node {\textbf{WP}};
 %TP
 \draw[thick] (4cm, -0.25cm) -- +(0, 0.5cm);
-\draw (5cm, 0) node {TP};
+\fill[lightgray] (4cm, -0.25cm) rectangle +(2cm, 0.5cm);
+\draw (5cm, 0) node {\textbf{TP}};
 \draw[thick] (6cm, -0.25cm) -- +(0, 0.5cm);
+%time axes
+\draw[->] (-0.5cm,  0.25cm) -- +(7cm, 0);
+\draw[->] (-0.5cm, -0.25cm) -- +(7cm, 0);
 %RX packets
 \draw[->,thick] (2.5cm, 0.75cm) -- +(0, -0.5cm);
 \draw (2.5cm, 1cm) node {P1};
@@ -387,14 +416,97 @@ in figure \ref{FigSCosensDutyCycle} hereafter.
 \draw (5cm, 1cm) node {P2};
 \draw[->,thick] (5.5cm, 0.25cm) -- +(0, 0.5cm);
 \draw (5.5cm, 1cm) node {P3};
-%brace
-\draw (0cm,-0.5cm)    .. controls +(0,-0.25cm) .. +(1.5cm,-0.25cm);
-\draw (1.5cm,-0.75cm) .. controls +(1.5cm,0)   .. +(1.5cm,-0.25cm);
-\draw (3cm,-1cm)      .. controls +(0,0.25cm)  .. +(1.5cm,0.25cm);
-\draw (4.5cm,-0.75cm) .. controls +(1.5cm,0)   .. +(1.5cm,0.25cm);
+%first brace: subframe
+\draw (0cm, -0.5cm)  .. controls +(0, -0.25cm) .. +(1cm, -0.25cm);
+\draw (1cm, -0.75cm) .. controls +(1cm, 0)     .. +(1cm, -0.25cm);
+\draw (2cm, -1cm)    .. controls +(0, 0.25cm)  .. +(1cm, 0.25cm);
+\draw (3cm, -0.75cm) .. controls +(1cm, 0)     .. +(1cm, 0.25cm);
+\draw (2cm, -1.25cm) node {\textbf{Subframe}};
+%second brace: whole cycle
+\draw (0cm, -1.5cm)    .. controls +(0, -0.25cm) .. +(1.5cm, -0.25cm);
+\draw (1.5cm, -1.75cm) .. controls +(1.5cm, 0)   .. +(1.5cm, -0.25cm);
+\draw (3cm, -2cm)      .. controls +(0, 0.25cm)  .. +(1.5cm, 0.25cm);
+\draw (4.5cm, -1.75cm) .. controls +(1.5cm, 0)   .. +(1.5cm, 0.25cm);
 \end{tikzpicture}
-\caption{A typical S-CoSenS router duty cycle.}
+\caption{A typical S-CoSenS router cycle.\\
+         The gray strips in the SP represents the short wake-up-and-listen
+         periods used for inter-router communication.}
 \label{FigSCosensDutyCycle}
+\end{figure}
+
+Note that in contrast to ContikiMAC, S-CoSenS is based on the \emph{Receiver
+Initiated} (RI) paradigm, whose the classical RI-MAC protocol \cite{RIMAC}
+is one of the better known application.
+Local synchronization between a S-CoSenS router and its leaf nodes, done
+as seen hereabove with the regular emission of a beacon, relies on the
+\emph{Low-Power Probing} (LPP) paradigm.
+On the other hand, synchronization and communication between different
+S-CoSenS routers, made thanks to short regular wake-up-and-listen periods,
+is based on the Low-Power Listening (LPL) paradigm (like the ContikiMAC
+protocol to which this mechanism is very similar, see on figure
+\ref{FigSCosensDutyCycle}).
+
+An interesting property of S-CoSenS is that leaf (i.e.: non-router) nodes
+always have their radio transceiver offline, except when they have packets
+to send. When a data packet is generated on a leaf node, the latter wakes up
+its radio transceiver, listens and waits to the first beacon emitted by
+an S-CoSenS router, then sends its packet using CSMA/CA at the beginning
+of the WP described in the beacon it received. A leaf node will put its
+transceiver offline during the delay between the beacon and that WP
+(that is: the SP of the router that emitted the received beacon), and
+will go back to sleep mode once its packet is transmitted.
+All of this procedure is shown in figure \ref{FigSCoSenSPktTx}.
+
+\begin{figure}[!h]
+\centering
+\begin{tikzpicture}[>=latex]
+%%router
+\draw (-0.5cm, 0) node {\large \textit{R}};
+%sp
+\draw[thick] (1cm, -0.25cm) -- +(0, 0.5cm);
+\draw (2cm, 0) node {\textbf{SP}};
+%wp
+\draw[thick] (3cm, -0.25cm) -- +(0, 0.5cm);
+\fill[lightgray] (3cm, -0.25cm) rectangle +(2cm, 0.5cm);
+\draw (4cm, 0) node {\textbf{WP}};
+%tp
+\draw[thick] (5cm, -0.25cm) -- +(0, 0.5cm);
+\fill[lightgray] (5cm, -0.25cm) rectangle +(0.5cm, 0.5cm);
+\draw (5.25cm, -0.5cm) node {\textbf{TP}};
+\draw[thick] (5.5cm, -0.25cm) -- +(0, 0.5cm);
+%time axes
+\draw[->] (-0.5cm,  0.25cm) -- +(6.5cm, 0);
+\draw[->] (-0.5cm, -0.25cm) -- +(6.5cm, 0);
+%%leaf node
+\draw (-0.5cm, -1.5cm) node {\large \textit{LN}};
+%radio activity
+\fill[gray] (0cm, -1.25cm) rectangle +(1.3cm, -0.5cm);
+\fill[gray] (2.9cm, -1.25cm) rectangle +(0.5cm, -0.5cm);
+%beacon
+\fill[black] (1cm, -0.25cm) rectangle +(0.2cm, 0.5cm);
+\draw[->,thick] (1.1cm, 0.25cm) -- +(0, -1.5cm);
+\draw[anchor=east] (1cm, -0.75cm) node {Beacon};
+\fill[black] (1cm, -1.25cm) rectangle +(0.2cm, -0.5cm);
+%packet generation
+\draw[->,very thick] (0cm, -2.5cm) -- +(0, 0.75cm);
+\draw[anchor=west] (0cm, -2.5cm)
+     node {\footnotesize \textbf{packet arrival}};
+%TX leaf->router
+\fill[black] (3.1cm, -1.25cm) rectangle +(0.2cm, -0.5cm);
+\draw[->,thick] (3.2cm, -1.25cm) -- +(0, 1cm);
+\draw[anchor=west] (3.2cm, -0.75cm) node {P1};
+\fill[black] (3.1cm, -0.25cm) rectangle +(0.2cm, 0.5cm);
+%TX router->...
+\fill[black] (5.1cm, -0.25cm) rectangle +(0.2cm, 0.5cm);
+\draw[->,thick] (5.2cm, 0.25cm) -- +(0, 0.5cm);
+\draw (5.2cm, 1cm) node {P1};
+%time axes
+\draw[->] (-0.5cm, -1.25cm) -- +(6.5cm, 0);
+\draw[->] (-0.5cm, -1.75cm) -- +(6.5cm, 0);
+\end{tikzpicture}
+\caption{A typical transmission of a data packet with the S-CoSenS protocol
+         between a leaf node and a router.}
+\label{FigSCoSenSPktTx}
 \end{figure}
 
 We thus need to synchronize with enough accuracy different devices (that
@@ -409,6 +521,11 @@ for that purpose definitely lacking.
 We have implemented S-CoSenS under RIOT OS, and evaluated it by comparing
 to the ContikiMAC + CSMA/CA couple under Contiki OS.
 
+As there was no standard implementation in RIOT OS network stack of
+the CSMA/CA described in the 802.15.4 protocol, our implementation of
+S-CoSenS currently also includes that MAC layer. This shall be changed
+in future production-ready implementations.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -416,12 +533,11 @@ to the ContikiMAC + CSMA/CA couple under Contiki OS.
 
 For our first experiments, we used, for practical reasons, the Cooja
 simulator rather than actual hardware. All the simulated nodes are
-virtual Zolertia Z1 motes, well-known MSP430-based devices, that are
-used in real-life, industrial setups.
+virtual Zolertia Z1 motes, well-known industrial MSP430-based devices.
 
 We have implemented test applications under both Contiki and RIOT OS, and
-made first tests by performing simulations of a basic, but large, 802.15.4
-PAN (Personal Area Network) constituted of a ``router'', and ten motes
+made first tests by performing simulations of a basic 802.15.4 PAN
+(Personal Area Network) constituted of a ``router'', and ten motes
 acting as ``leaf nodes''. The ten nodes regularly send data packets to
 the router, that retransmits these data packets to a nearby ``sink'' device.
 Both the router and the ten nodes use exclusively the S-CoSenS RDC/MAC
@@ -466,18 +582,18 @@ of the ContikiMAC RDC protocol, under moderately-heavy to extreme network
 loads. The loads were generated by the application loaded on the 10 leaf
 nodes: they were programmed to generate large 802.15.4 network packets
 (90 bytes of payload, which translates to an actual packet size of
-111 bytes) at a fixed rate, with random variations to avoid
-medium congestion. The different setups are described in table
-\ref{TblDataRates}: the table gives the average delay between
-each packet transmission on each mote, the average number of
-packets emitted every second for the 10 nodes, and the expected
-resulting data rate.
+111 bytes) at a fixed rate, with random jitters in the interval of
+$[ 0.5 L , 1.5  L ]$, with $L$ being the targeted inter-arrival
+period. The different setups are described in table \ref{TblDataRates}:
+the table gives the average inter-arrival period between two consecutive
+packets sent by each mote, the average number of packets emitted every
+second for the 10 leaf nodes, and the expected resulting data rate.
 
 \begin{table}[htb]
 \centering
-\begin{tabular}{|l|r|r|r|}
+\begin{tabular}{|l|p{1.25cm}|r|r|}
 \hline
-Setup     &  Delay  & Pkts/s & Data Rate \\
+Setup     &  Inter-Arrival  & Pkts/s & Data Rate \\
 \hline
 Moderate  & 1500 ms &   6.7  &  5,867 bit/s \\ 
 High      & 1000 ms &  10    &  8,800 bit/s \\
@@ -489,7 +605,7 @@ Extreme   &  100 ms & 100    & 88,000 bit/s \\
 \label{TblDataRates}
 \end{table}
 
-For each scenario, we performed two kind of simulations:
+For each scenario, we performed two kinds of simulations:
 \begin{itemize}
 \item a \emph{fixed packet number simulation}, during which each node emits
 500 packets at the fixed rate, then turns off; the simulation ends when all
@@ -500,8 +616,9 @@ unspecified number of packets at the fixed rate; the simulation ends after
 10 minutes.
 \end{itemize}
 
-These different kind of simulations allow us to easily compute respectively
-QoS data and duty cycle statistics, as we will now see in the next section.
+These different kinds of simulations allow us to easily compute respectively
+packet reception rate (PRR) and duty cycle statistics, as we will now see
+in the next section.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
