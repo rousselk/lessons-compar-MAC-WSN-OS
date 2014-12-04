@@ -1,16 +1,8 @@
-\documentclass[a4paper,twoside]{article}
+\documentclass[conference]{IEEEtran}
 
-\usepackage{apalike}
-\usepackage{SCITEPRESS}
-\usepackage{amssymb}
-\usepackage{amstext}
 \usepackage{amsmath}
-\usepackage{amsthm}
 \usepackage{graphicx}
-\usepackage{multicol}
-\usepackage[small]{caption}
-\usepackage{subfloat}
-
+\usepackage{caption}
 \usepackage{tikz}
 
 
@@ -28,17 +20,17 @@
 
 
 \author{
-\authorname{K\'evin Roussel, Ye-Qiong Song and Olivier Zendra}
-\affiliation{LORIA/INRIA Nancy Grand-Est,\\
+\IEEEauthorblockN{K\'evin Roussel, Ye-Qiong Song and Olivier Zendra}
+\IEEEauthorblockA{LORIA/INRIA Nancy Grand-Est,\\
              Universit\'e de Lorraine,\\
              615, rue du Jardin Botanique,\\
-             54600 Villers-L\`es-Nancy, France}
-\email{\texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}}
+             54600 Villers-L\`es-Nancy, France\\
+Email: \texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}}
 }
 
 
-\keywords{Wireless Sensor Networks, Internet of Things, Heavy Load, QoS,
-          MAC/RDC protocols, S-CoSenS, ContikiMAC}
+%\keywords{Wireless Sensor Networks, Internet of Things, Heavy Load, QoS,
+%          MAC/RDC protocols, S-CoSenS, ContikiMAC}
 
 
 %Nécessité de s'intéresser au cas où les réseaux de WSN ont de fortes charges
@@ -47,8 +39,10 @@
 %Std 802.15.4 : délai entre réception d'un paquet et envoi d'un acquittement
 %entre deux paquets successifs => rarement respectés.
 
+\maketitle
 
-\abstract{Implementing new, high-performance MAC/RDC protocols requires
+\begin{abstract}
+Implementing new, high-performance MAC/RDC protocols requires
 real-time features, to be able to synchronize correctly between different
 unrelated devices. Such features are highly desirable for operating wireless
 sensor networks (WSN) that are designed to be part of the Internet of Things
@@ -63,21 +57,22 @@ simulations running on the Cooja emulator. We focus on QoS results,
 especially under heavy network loads.\\
 Our results show that our protocol performs very well, bringing noticeable
 improvements over ContikiMAC results under a large spectrum of network loads
-and configurations.}
+and configurations.
+\end{abstract}
 
 
-\onecolumn \maketitle \normalsize \vfill
+\IEEEpeerreviewmaketitle
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{\uppercase{Introduction}}
+\section{Introduction}
 
 TODO.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{\uppercase{WSN Software platforms}}
+\section{WSN Software platforms}
 
 Specialized OSes for the resource-constrained devices that constitute
 wireless sensor networks have been designed, published, and made available
@@ -176,7 +171,7 @@ the most suitable OSes of the embedded and real-time world.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{\uppercase{Protocols}}
+\section{Protocols}
 \label{SectProtoDescription}
 
 \subsection{The ContikiMAC RDC protocol}
@@ -528,7 +523,7 @@ in future production-ready implementations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{\uppercase{Method and Benchmark}}
+\section{Method and Benchmark}
 
 For our first experiments, we used, for practical reasons, the Cooja
 simulator rather than actual hardware. All the simulated nodes are
@@ -622,7 +617,7 @@ in the next section.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{\uppercase{Results and Discussion}}
+\section{Results and Discussion}
 
 \subsection{Packet Reception Rate (PRR)}
 
@@ -906,7 +901,7 @@ QoS matters (PRR and TX delays).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{\uppercase{Conclusion and Future Works}}
+\section{Conclusion and Future Works}
 
 We have built simulation scenarios to test whether our MAC/RDC protocol,
 S-CoSenS, could handle heavy network loads, trying to push the envelope
@@ -949,7 +944,7 @@ the network stack of the RIOT operating system.
 
 
 \vfill
-\bibliographystyle{apalike}
+\bibliographystyle{IEEEtran}
 {\small
 \bibliography{wowmom2015}}
 
