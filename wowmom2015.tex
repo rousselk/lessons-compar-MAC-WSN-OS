@@ -15,8 +15,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\title{Lessons Learned through Actual Implementation of MAC/RDC Protocols
-       on 802.15.4 Radio Medium: the Case of S-CoSenS}
+\title{Some Lessons Learned through Implementation and Performance Evaluation
+       of Two MAC/RDC Protocols on WSN OS}
 
 
 \author{
@@ -855,62 +855,62 @@ The results we obtained for duty cycle statistics are presented in tables
 %%% ContikiMAC duty cycles
 \begin{table}
 \centering
-\begin{tabular}{|l|r|r|r|r|}
+\begin{tabular}{|l|r|r|r|}
 \hline
- & \multicolumn{4}{|c|}{PACKET ARRIVAL INTERVAL}\\
+ & \multicolumn{3}{|c|}{PACKET ARRIVAL INTERVAL}\\
 \hline
- & 1500 ms & 1000 ms & 500 ms & 100 ms \\
-\hline
-
-\multicolumn{5}{|c|}{Channel Check Interval = 125~ms}\\
-\hline
- ROUTER & \multicolumn{4}{|c|}{ }\\
-\hline
-Transceiver Active & 8.62\% & 11.12\% & 14.98\% & 26.99\% \\
-Radio TX           & 1.35\% &  1.50\% &  1.33\% &  1.38\% \\
-Radio RX           & 2.55\% &  3.66\% &  5.77\% & 12.33\% \\
-Radio Interference & 0.93\% &  1.27\% &  1.61\% &  1.58\% \\
-\hline
- NODES (average) & \multicolumn{4}{|c|}{ }\\
-\hline
-Transceiver Active & 3.38\% & 3.87\% & 4.79\% & 6.11\% \\
-Radio TX           & 1.42\% & 1.65\% & 2.21\% & 2.93\% \\
-Radio RX           & 0.19\% & 0.22\% & 0.26\% & 0.40\% \\
-Radio Interference & 0.15\% & 0.18\% & 0.23\% & 0.24\% \\
+ & 1500 ms & 1000 ms & 500 ms \\
 \hline
 
-\multicolumn{5}{|c|}{Channel Check Interval = 62~ms}\\
+\multicolumn{4}{|c|}{Channel Check Interval = 125~ms}\\
 \hline
- ROUTER & \multicolumn{4}{|c|}{ }\\
+ ROUTER & \multicolumn{3}{|c|}{ }\\
 \hline
-Transceiver Active & 11.55\% & 15.41\% & 21.12\% & 42.53\% \\
-Radio TX           &  2.60\% &  3.22\% &  2.25\% &  8.91\% \\
-Radio RX           &  2.74\% &  4.05\% &  7.30\% & 17.87\% \\
-Radio Interference &  0.39\% &  1.26\% &  2.59\% &  3.68\% \\
+Transceiver Active & 8.62\% & 11.12\% & 14.98\% \\
+Radio TX           & 1.35\% &  1.50\% &  1.33\% \\
+Radio RX           & 2.55\% &  3.66\% &  5.77\% \\
+Radio Interference & 0.93\% &  1.27\% &  1.61\% \\
 \hline
- NODES (average) & \multicolumn{4}{|c|}{ }\\
+ NODES (average) & \multicolumn{3}{|c|}{ }\\
 \hline
-Transceiver Active & 4.16\% & 6.56\% & 8.80\% & 10.69\% \\
-Radio TX           & 1.11\% & 2.15\% & 3.21\% &  4.22\% \\
-Radio RX           & 0.47\% & 0.70\% & 0.82\% &  0.99\% \\
-Radio Interference & 0.14\% & 0.43\% & 0.75\% &  0.85\% \\
+Transceiver Active & 3.38\% & 3.87\% & 4.79\% \\
+Radio TX           & 1.42\% & 1.65\% & 2.21\% \\
+Radio RX           & 0.19\% & 0.22\% & 0.26\% \\
+Radio Interference & 0.15\% & 0.18\% & 0.23\% \\
 \hline
 
-\multicolumn{5}{|c|}{Channel Check Interval = 31~ms}\\
+\multicolumn{4}{|c|}{Channel Check Interval = 62~ms}\\
 \hline
- ROUTER & \multicolumn{4}{|c|}{ }\\
+ ROUTER & \multicolumn{3}{|c|}{ }\\
 \hline
-Transceiver Active & 12.77\% & 17.85\% & 31.13\% & 58.76\% \\
-Radio TX           &  2.64\% &  4.00\% &  6.88\% &  4.16\% \\
-Radio RX           &  2.78\% &  4.18\% &  8.24\% & 23.02\% \\
-Radio Interference &  0.16\% &  0.40\% &  2.64\% &  6.64\% \\
+Transceiver Active & 11.55\% & 15.41\% & 21.12\% \\
+Radio TX           &  2.60\% &  3.22\% &  2.25\% \\
+Radio RX           &  2.74\% &  4.05\% &  7.30\% \\
+Radio Interference &  0.39\% &  1.26\% &  2.59\% \\
 \hline
- NODES (average) & \multicolumn{4}{|c|}{ }\\
+ NODES (average) & \multicolumn{3}{|c|}{ }\\
 \hline
-Transceiver Active & 5.61\% & 7.45\% & 14.27\% & 18.20\% \\
-Radio TX           & 0.90\% & 1.48\% &  3.89\% &  5.54\% \\
-Radio RX           & 0.66\% & 1.03\% &  1.96\% &  2.32\% \\
-Radio Interference & 0.11\% & 0.21\% &  1.13\% &  1.63\% \\
+Transceiver Active & 4.16\% & 6.56\% & 8.80\% \\
+Radio TX           & 1.11\% & 2.15\% & 3.21\% \\
+Radio RX           & 0.47\% & 0.70\% & 0.82\% \\
+Radio Interference & 0.14\% & 0.43\% & 0.75\% \\
+\hline
+
+\multicolumn{4}{|c|}{Channel Check Interval = 31~ms}\\
+\hline
+ ROUTER & \multicolumn{3}{|c|}{ }\\
+\hline
+Transceiver Active & 12.77\% & 17.85\% & 31.13\% \\
+Radio TX           &  2.64\% &  4.00\% &  6.88\% \\
+Radio RX           &  2.78\% &  4.18\% &  8.24\% \\
+Radio Interference &  0.16\% &  0.40\% &  2.64\% \\
+\hline
+ NODES (average) & \multicolumn{3}{|c|}{ }\\
+\hline
+Transceiver Active & 5.61\% & 7.45\% & 14.27\% \\
+Radio TX           & 0.90\% & 1.48\% &  3.89\% \\
+Radio RX           & 0.66\% & 1.03\% &  1.96\% \\
+Radio Interference & 0.11\% & 0.21\% &  1.13\% \\
 
 \hline
 \end{tabular}
@@ -921,62 +921,62 @@ Radio Interference & 0.11\% & 0.21\% &  1.13\% &  1.63\% \\
 %%% S-CoSenS duty cycles
 \begin{table}
 \centering
-\begin{tabular}{|l|r|r|r|r|}
+\begin{tabular}{|l|r|r|r|}
 \hline
- & \multicolumn{4}{|c|}{PACKET ARRIVAL INTERVAL}\\
+ & \multicolumn{3}{|c|}{PACKET ARRIVAL INTERVAL}\\
 \hline
- & 1500 ms & 1000 ms & 500 ms & 100 ms \\
-\hline
-
-\multicolumn{5}{|c|}{Subframe Duration = 125~ms}\\
-\hline
- ROUTER & \multicolumn{4}{|c|}{ }\\
-\hline
-Transceiver Active & 75.60\% & 79.01\% & 76.18\% & \\
-Radio TX           &  4.20\% &  4.70\% &  8.26\% & \\
-Radio RX           &  3.92\% &  4.53\% &  8.90\% & \\
-Radio Interference &  0.86\% &  1.25\% &  4.29\% & \\
-\hline
- NODES (average) & \multicolumn{4}{|c|}{ }\\
-\hline
-Transceiver Active & 9.02\% & 11.45\% & 27.37\% & \\
-Radio TX           & 0.55\% &  0.68\% &  1.70\% & \\
-Radio RX           & 0.97\% &  1.32\% &  5.48\% & \\
-Radio Interference & 0.14\% &  0.23\% &  1.70\% & \\
+ & 1500 ms & 1000 ms & 500 ms \\
 \hline
 
-\multicolumn{5}{|c|}{Subframe Duration = 62~ms}\\
+\multicolumn{4}{|c|}{Subframe Duration = 125~ms}\\
 \hline
- ROUTER & \multicolumn{4}{|c|}{ }\\
+ ROUTER & \multicolumn{3}{|c|}{ }\\
 \hline
-Transceiver Active & 67.84\% & 70.47\% & 76.24\% & \\
-Radio TX           &  4.52\% &  5.03\% &  8.78\% & \\
-Radio RX           &  3.82\% &  4.45\% &  9.05\% & \\
-Radio Interference &  0.91\% &  1.31\% &  4.75\% & \\
+Transceiver Active & 75.60\% & 79.01\% & 76.18\% \\
+Radio TX           &  4.20\% &  4.70\% &  8.26\% \\
+Radio RX           &  3.92\% &  4.53\% &  8.90\% \\
+Radio Interference &  0.86\% &  1.25\% &  4.29\% \\
 \hline
- NODES (average) & \multicolumn{4}{|c|}{ }\\
+ NODES (average) & \multicolumn{3}{|c|}{ }\\
 \hline
-Transceiver Active & 6.78\% & 8.73\% & 23.27\% & \\
-Radio TX           & 0.53\% & 0.66\% &  1.76\% & \\
-Radio RX           & 0.74\% & 1.03\% &  4.45\% & \\
-Radio Interference & 0.12\% & 0.20\% &  1.56\% & \\
+Transceiver Active & 9.02\% & 11.45\% & 27.37\% \\
+Radio TX           & 0.55\% &  0.68\% &  1.70\% \\
+Radio RX           & 0.97\% &  1.32\% &  5.48\% \\
+Radio Interference & 0.14\% &  0.23\% &  1.70\% \\
 \hline
 
-\multicolumn{5}{|c|}{Subframe Duration = 31~ms}\\
+\multicolumn{4}{|c|}{Subframe Duration = 62~ms}\\
 \hline
- ROUTER & \multicolumn{4}{|c|}{ }\\
+ ROUTER & \multicolumn{3}{|c|}{ }\\
 \hline
-Transceiver Active & 66.22\% & 67.56\% & 67.91\% & \\
-Radio TX           &  4.96\% &  5.48\% &  8.43\% & \\
-Radio RX           &  3.84\% &  4.43\% &  8.90\% & \\
-Radio Interference &  1.04\% &  1.48\% &  8.39\% & \\
+Transceiver Active & 67.84\% & 70.47\% & 76.24\% \\
+Radio TX           &  4.52\% &  5.03\% &  8.78\% \\
+Radio RX           &  3.82\% &  4.45\% &  9.05\% \\
+Radio Interference &  0.91\% &  1.31\% &  4.75\% \\
 \hline
- NODES (average) & \multicolumn{4}{|c|}{ }\\
+ NODES (average) & \multicolumn{3}{|c|}{ }\\
 \hline
-Transceiver Active & 6.15\% & 7.68\% & 40.04\% & \\
-Radio TX           & 0.58\% & 0.70\% &  2.64\% & \\
-Radio RX           & 0.68\% & 0.93\% &  7.08\% & \\
-Radio Interference & 0.16\% & 0.22\% &  3.98\% & \\
+Transceiver Active & 6.78\% & 8.73\% & 23.27\% \\
+Radio TX           & 0.53\% & 0.66\% &  1.76\% \\
+Radio RX           & 0.74\% & 1.03\% &  4.45\% \\
+Radio Interference & 0.12\% & 0.20\% &  1.56\% \\
+\hline
+
+\multicolumn{4}{|c|}{Subframe Duration = 31~ms}\\
+\hline
+ ROUTER & \multicolumn{3}{|c|}{ }\\
+\hline
+Transceiver Active & 66.22\% & 67.56\% & 67.91\% \\
+Radio TX           &  4.96\% &  5.48\% &  8.43\% \\
+Radio RX           &  3.84\% &  4.43\% &  8.90\% \\
+Radio Interference &  1.04\% &  1.48\% &  8.39\% \\
+\hline
+ NODES (average) & \multicolumn{3}{|c|}{ }\\
+\hline
+Transceiver Active & 6.15\% & 7.68\% & 40.04\% \\
+Radio TX           & 0.58\% & 0.70\% &  2.64\% \\
+Radio RX           & 0.68\% & 0.93\% &  7.08\% \\
+Radio Interference & 0.16\% & 0.22\% &  3.98\% \\
 
 \hline
 \end{tabular}
@@ -1027,8 +1027,8 @@ our packets between Cooja simulations and real hardware executions.
 \hline
 Operating System     &  Cooja Sim.  & Hardware Test \\
 \hline
-RIOT OS              &   89 ticks   &  14 ticks \\ 
-Contiki OS           &   32 ticks   &   7 ticks \\
+RIOT OS              &   89 ticks   &  32 ticks \\ 
+Contiki OS           &   14 ticks   &   7 ticks \\
 \hline
 \end{tabular}
 \caption{Delays observed for loading packets into CC2420 TX buffer.\\
