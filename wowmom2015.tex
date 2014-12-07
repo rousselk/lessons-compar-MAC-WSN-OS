@@ -66,7 +66,26 @@ and configurations.
 
 \section{Introduction}
 
-TODO.
+In the present article, we will describe the various difficulties we had
+to encounter when implementing a new RDC protocol (S-CoSenS, described
+hereafter), as well as the solutions we found for these problems.
+
+The questions we had to answer were the following:
+\begin{itemize}
+\item \emph{Software Platform:} what features are needed in WSN/IoT operating
+      systems to implement efficiently new high-performance MAC/RDC protocols?
+\item \emph{Development Tools:} what tools can help in the development and
+      debugging of such protocols?
+\item \emph{Implementation Best Practices:} what trade-offs have to be made
+      between optimization one one hand, and safety and modularity on the
+      other hand when actually implementing these protocols? What is the
+      impact of such trade-offs on the performances of the implementation?
+\item \emph{Evaluation of Implementations:} what are these implementations'
+      performances, especially in terms of QoS and energy savings?
+\end{itemize}
+
+We will---as our contribution---analyze our answers to these various
+questions.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -172,6 +191,12 @@ the most suitable OSes of the embedded and real-time world.
 
 \section{Protocols}
 \label{SectProtoDescription}
+
+To evaluate our work, we first tried to evaluate and compare two
+implementations of MAC/RDC protocols. The first is the well-known
+implementation of the default RDC protocol for the currently most used OS
+in the WSN/IoT literature. The second is the implementation of one of our
+new designs in RDC protocols on the software platform we choosed.
 
 \subsection{The ContikiMAC RDC protocol}
 
@@ -520,6 +545,54 @@ in future production-ready implementations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\section{Cooja: a tool for development, not evaluation}
+\label{SectCoojaDevNotEval}
+
+The Cooja tool provided by the Contiki project \cite{Cooja} is very handy for
+developement and debugging. It is a convivial GUI that allows to perform
+simulations of whole networks or wireless devices, and embeds emulators
+that allow to mimic quite accurately motes based on MSP430 and AVR
+architectures.
+
+However, we discovered it is not suited for precise and accurate
+performance evaluations.
+
+We constated, during our simulations, an anomaly in the MSPSim software
+(the MSP430 device simulator used by Cooja to emulate MSP430-based motes
+at the cycle level \cite{MSPSim}): \emph{the delay used by the simulator
+to load our large---111 bytes---IEEE 802.15.4 packets into the CC2420
+transceiver TX buffer is too long;} Table \ref{TblTXPktLoadDelays} shows
+the differences of delay for loading our packets between Cooja simulations
+and actual hardware executions.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+Operating System       &  Cooja Sim.  & Hardware Test \\
+\hline
+RIOT OS                &   89 ticks   &  32 ticks \\ 
+Contiki OS             &   14 ticks   &   7 ticks \\
+``Bare metal'' (no OS) &   nn ticks   &  nn ticks \\
+\hline
+\end{tabular}
+\caption{Delays observed for loading packets into CC2420 TX buffer,
+using various software platforms.\\
+Values are given in ``ticks'' of \texttt{rtimer/hwtimer}, both of these
+timers incrementing at a rate of 32,768Hz. The unit is thus a fixed period
+of time equal to about 30.5 microseconds.}
+\label{TblTXPktLoadDelays}
+\end{table}
+
+We have thus determined that this problem occurs whatever OS is used
+on the motes. This problem seems to be caused by an overestimation
+of the delays caused by the operation of the SPI bus that links
+the MSP430 microcontroller to the CC2420 radio transceiver
+on the Z1 hardware.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Method and Benchmark}
 
 For our first experiments, we used, for practical reasons, the Cooja
@@ -671,25 +744,25 @@ successfully arrived to their destination, according to the cycle
 duration (with ContikiMAC: via changing the channel check rate parameter).
 These results are obtained with fixed packet number simulations.
 
-\begin{figure}
+\begin{figure}[tbph]
   \centering
   \includegraphics[width=7.5cm]{graphes/PRR8Hz.png}
   \caption{PRR results for 125~ms subframe/check interval}
   \label{FigSuccessRate8Hz}
 \end{figure}
-\begin{figure}
+\begin{figure}[tbph]
   \centering
   \includegraphics[width=7.5cm]{graphes/PRR16Hz.png}
   \caption{PRR results for 62~ms subframe/check interval}
   \label{FigSuccessRate16Hz}
 \end{figure}
-\begin{figure}
+\begin{figure}[tbph]
   \centering
   \includegraphics[width=7.5cm]{graphes/PRR32Hz.png}
   \caption{PRR results for 31~ms subframe/check interval}
   \label{FigSuccessRate32Hz}
 \end{figure}
-\begin{figure}
+\begin{figure}[tbph]
   \centering
   \includegraphics[width=7.5cm]{graphes/PRRstabilitySCoSenS.png}
   \caption{Combined PRR results for S-CoSenS,
@@ -773,25 +846,25 @@ Note that figures \ref{FigDelays8Hz}, \ref{FigDelays16Hz} and
 \ref{FigDelays32Hz} show the delays---in their vertical axis---in
 logarithmic scale, for better readability.
 
-\begin{figure}
+\begin{figure}[tbph]
   \centering
   \includegraphics[width=7.5cm]{graphes/Delays8Hz.png}
   \caption{Transmission delay means for 125~ms subframe/check interval}
   \label{FigDelays8Hz}
 \end{figure}
-\begin{figure}
+\begin{figure}[tbph]
   \centering
   \includegraphics[width=7.5cm]{graphes/Delays16Hz.png}
   \caption{Transmission delay means for 62~ms subframe/check interval}
   \label{FigDelays16Hz}
 \end{figure}
-\begin{figure}
+\begin{figure}[tbph]
   \centering
   \includegraphics[width=7.5cm]{graphes/Delays32Hz.png}
   \caption{Transmission delay means for 31~ms subframe/check interval}
   \label{FigDelays32Hz}
 \end{figure}
-\begin{figure}
+\begin{figure}[tbph]
   \centering
   \includegraphics[width=7.5cm]{graphes/DelaysStabilitySCoSenS.png}
   \caption{Combined Transmission delay averages for S-CoSenS,
@@ -852,7 +925,7 @@ The results we obtained for duty cycle statistics are presented in tables
 \ref{TblDutyCyclesContikiMAC} and \ref{TblDutyCyclesSCoSenS}.
 
 %%% ContikiMAC duty cycles
-\begin{table}
+\begin{table}[tbph]
 \centering
 \begin{tabular}{|l|r|r|r|}
 \hline
@@ -918,7 +991,7 @@ Radio Interference & 0.11\% & 0.21\% &  1.13\% \\
 \end{table}
 
 %%% S-CoSenS duty cycles
-\begin{table}
+\begin{table}[tbph]
 \centering
 \begin{tabular}{|l|r|r|r|}
 \hline
@@ -1002,46 +1075,9 @@ transmissions than ContikiMAC, which is designed using the LPL
 paradigm (and more especially, the continuous emission of the
 whole data packets until acknowledgement by the receiver).
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Limitations and Possible Future Improvements}
-\label{SectLimits}
-
-The current work has of course its limitations. Its main drawback is that
-\emph{it is only based on simulations.} To be truly accurate, we would need
-to run these tests on actual hardware.
-
-This is especially true since we constated, during our simulations,
-an anomaly in the MSPSim software (the MSP430 device simulator used by Cooja
-to emulate MSP430-based motes at the cycle level \cite{MSPSim}):
-\emph{the delay used by the simulator to load our large---111 bytes---IEEE
-802.15.4 packets into the CC2420 transceiver TX buffer is too long;} Table
-\ref{TblTXPktLoadDelays} shows the differences of delay for loading
-our packets between Cooja simulations and actual hardware executions.
-
-\begin{table}
-\centering
-\begin{tabular}{|l|r|r|}
-\hline
-Operating System     &  Cooja Sim.  & Hardware Test \\
-\hline
-RIOT OS              &   89 ticks   &  32 ticks \\ 
-Contiki OS           &   14 ticks   &   7 ticks \\
-\hline
-\end{tabular}
-\caption{Delays observed for loading packets into CC2420 TX buffer.\\
-Values are given in ``ticks'' of \texttt{rtimer/hwtimer}, both of these
-timers incrementing at a rate of 32,768Hz. The unit is thus a fixed period
-of time equal to about 30.5 microseconds.}
-\label{TblTXPktLoadDelays}
-\end{table}
-
-We have thus determined that this problem occurs whatever OS is used
-on the motes. This problem seems to be caused by an overestimation
-of the delays caused by the operation of the SPI bus that links
-the MSP430 microcontroller to the CC2420 radio transceiver
-on the Z1 hardware.
+\subsection{Influence of optimization in implementations}
 
 One can also clearly see on table \ref{TblTXPktLoadDelays} that independently
 of the overestimation due to the simulation inaccuracies, RIOT OS delays
@@ -1060,9 +1096,42 @@ that may occur on the SPI bus; RIOT implementation is on the contrary
 much safer, but slower. This is again a trade-off, between performance
 optimization and safety.
 
+We tried to implement the ``unsafe'' SPI optimization on RIOT, and measured
+the speed difference between both versions under the same software platform.
+The results are shown in table \ref{TblRIOTLoadDelays} hereafter.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+RIOT OS Implementation &  Cooja Sim.  & Hardware Test \\
+\hline
+Standard (Safe)        &   89 ticks   &  32 ticks \\ 
+Fast SPI Write         &   36 ticks   &  14 ticks \\
+\hline
+\end{tabular}
+\caption{Delays observed for loading packets into CC2420 TX buffer, under
+different implementation of SPI driver for RIOT OS.\\
+Values are given in ``ticks'' of \texttt{rtimer/hwtimer}, both of these
+timers incrementing at a rate of 32,768Hz. The unit is thus a fixed period
+of time equal to about 30.5 microseconds.}
+\label{TblRIOTLoadDelays}
+\end{table}
+
 We can still note, however, that the speed penalty imposed to S-CoSenS by
 RIOT OS SPI subsystem did not prevent it from obtaining superior QoS
 performance.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Limitations and Possible Future Improvements}
+\label{SectLimits}
+
+The current work has of course its limitations. Its main drawback is that
+\emph{it is only based on simulations}, which makes it vulnerable to
+simulation tools' weaknesses (cf. section \ref{SectCoojaDevNotEval}).
+To be truly accurate, we would need to run these tests
+on actual hardware.
 
 Due to the delays overestimation by the emulator, we can expect results on
 real hardware to be better than those we have observed in our simultations.
@@ -1090,6 +1159,8 @@ shall be the subject of one of our future experiments.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Conclusion and Future Works}
+
+{\textbf{(A REVOIR)}}
 
 We have built simulation scenarios to test whether our MAC/RDC protocol,
 S-CoSenS, could handle heavy network loads, trying to push the envelope
