@@ -1077,6 +1077,42 @@ whole data packets until acknowledgement by the receiver).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\subsection{Memory Constraints and Stability}
+
+During the development and the evaluation of our protocol, we encountered
+some crashes, especially when using large values for outgoing packet queues.
+These crashes were due to system stack overflowing and going into the
+packet queue memory space: when the outgoing queue was full, packet data
+were thus regularly overwriting system stack, resulting of course in
+unrecoverable software failures.
+
+This issue is due to the very limited amount of data RAM in the MSP430 used
+in Z1 motes (8 Kb RAM total), combined with the absence of \emph{Memory
+Protection Unit} (MPU) in this microcontroller architecture, thus allowing
+for silent and undetectable memory corruption problems.
+
+While using MCUs with more RAM can probably avoid this kind of problem from
+occuring, detecting and handling it correctly and systematically needs either:
+\begin{itemize}
+\item \emph{a hardware mechanism} to detect it and provoke an exception when
+      unwanted memory accesses occur: this is the role, in microcontrollers,
+      of MPU; some architectures (like ARM) offer such a feature as an option
+      which should be seen as necessary for the design of safe systems;
+\item for architectures devoid of such mechanisms, a \emph{software support}
+      for surveying the value in criticial registers---such as the stack
+      pointer---simply if nothing more to ensure it is within a permitted
+      range; such a mechanism is hard to implement at the OS level without
+      hardware support: a more easy way could be to add automaticallty at the
+      compilation stage some ``boilerplate'' code to check stack pointer
+      evolution at every subroutine entry (since almost always during such an
+      event that stack pointers are decremented towards new stack tops).
+\end{itemize}
+
+For our tests, we just reduced the outgoing packet queue size to leave
+enough room to system stack.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \subsection{Influence of optimization in implementations}
 
 One can also clearly see on table \ref{TblTXPktLoadDelays} that independently
@@ -1160,7 +1196,7 @@ shall be the subject of one of our future experiments.
 
 \section{Conclusion and Future Works}
 
-{\textbf{(A REVOIR)}}
+{\textbf{(\`A REVOIR)}}
 
 We have built simulation scenarios to test whether our MAC/RDC protocol,
 S-CoSenS, could handle heavy network loads, trying to push the envelope
