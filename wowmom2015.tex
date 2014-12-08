@@ -25,7 +25,7 @@
 \IEEEauthorblockA{Universit\'e de Lorraine~/ LORIA~/ INRIA Nancy Grand-Est,\\
                   615, rue du Jardin Botanique,\\
                   54600 Villers-l\`es-Nancy, France\\
-                  8 d\'ecembre 2014\\
+                  8 d\'ecembre 2014 19:15 \\
 Email: \texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}}
 }
 
@@ -187,6 +187,7 @@ to many devices powered by ARM, MSP430, and---more recently---AVR
 microcontrollers) and a comprehensive set of features, including
 a network stack.
 
+\begin{observ}
 Moreover, it offers a set of key features that is otherwise uncommon in
 the WSN/IoT domain, the most important for us being:
 \begin{itemize}
@@ -199,8 +200,6 @@ the WSN/IoT domain, the most important for us being:
       with a resolution of 30~microseconds, instead of 8000~microseconds
       for Contiki OS.
 \end{itemize}
-
-\begin{observ}
 These features are what make RIOT a full-fledged \emph{real-time} operating
 system, that fulfills our needs.
 \end{observ}
@@ -667,7 +666,7 @@ that allow to mimic quite accurately motes based on MSP430 and AVR
 architectures.
 
 \begin{observ}
-However, we discovered it is not suited for precise and accurate
+However, we discovered Cooja is not suited for precise and accurate
 performance evaluations.
 \end{observ}
 
@@ -787,18 +786,17 @@ These results are obtained with fixed packet number simulations.
   \label{FigSuccessRateSCoSenS}
 \end{figure}
 
-\begin{observ}
 The data shown in figures \ref{FigSuccessRate8Hz} to
-\ref{FigSuccessRateSCoSenS} show us many facts:
+\ref{FigSuccessRateSCoSenS} show us many facts that constitute
+the next learned lesson:
 
+\begin{observ}
+We observe that:
 \begin{itemize}
-
 \item ContikiMAC PRR increases significantly with the Channel Check Rate
       (that is: when Channel Check Interval diminishes).
-
 \item S-CoSenS PRR results are either similar or better than ContikiMAC's
       in every scenario.
-
 \item S-CoSenS PRR results are much more stable when the subframe duration
       changes than ContikiMAC PRR when changing check rate: this stability
       is clearly visible on figure \ref{FigSuccessRateSCoSenS}; thus,
@@ -806,7 +804,6 @@ The data shown in figures \ref{FigSuccessRate8Hz} to
       the insurance of a fair PRR in most situations---that is:
       when radio channel is not saturated like in our ``extreme''
       scenario).
-
 \end{itemize}
 \end{observ}
 
@@ -1039,14 +1036,16 @@ were thus regularly overwriting system stack, resulting of course in
 unrecoverable software failures.
 
 \begin{observ}
-This issue is due to the very limited amount of data RAM in the MSP430 used
-in Z1 motes (8 Kb RAM total), combined with the absence of \emph{Memory
-Protection Unit} (MPU) in this microcontroller architecture, thus allowing
-for silent and undetectable memory corruption problems.
+The crashes observed with S-CoSenS/RIOT are due to the very limited
+amount of data RAM in the MSP430 used in Z1 motes (8 Kb RAM total),
+combined with the absence of \emph{Memory Protection Unit} (MPU) in this
+microcontroller architecture, thus allowing for silent and undetectable
+memory corruption problems.
 \end{observ}
 
-While using MCUs with more RAM can probably avoid this kind of problem from
-occuring, detecting and handling it correctly and systematically needs either:
+While using microcontrollerss with more RAM can probably avoid this kind of
+problem from occuring, detecting and handling it correctly and systematically
+needs either:
 \begin{itemize}
 \item \emph{a hardware mechanism} to detect it and provoke an exception when
       unwanted memory accesses occur: this is the role, in microcontrollers,
@@ -1086,7 +1085,7 @@ that may occur on the SPI bus; RIOT implementation is on the contrary
 much safer, but slower.
 
 \begin{observ}
-This is again a trade-off, between performance optimization and safety.
+There is clearly a trade-off between performance optimization and safety.
 In that case, it depends less on the software platform (OS) itself than
 on the implementation choices for the SPI bus driver.
 \end{observ}
@@ -1184,9 +1183,11 @@ Our contributions thus consist in the following:
       survey constantly stack use and memory corruption, using code
       added at the compilation stage.
 
-\item We examined the influence of optimizations---specifically, in the
-      management of SPI bus in an optimized or safe manner---on
-      implementation performance.
+\item We examined the influence of optimizations on implementation
+      performance---specifically, in the management of SPI bus in an
+      optimized or safe manner, which impact the speed of loading packets
+      into radio transceiver by a factor of 2 to 3---at the expense of
+      stability.
 
 \end{itemize}
 
