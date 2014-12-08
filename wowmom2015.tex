@@ -25,7 +25,7 @@
 \IEEEauthorblockA{Universit\'e de Lorraine~/ LORIA~/ INRIA Nancy Grand-Est,\\
                   615, rue du Jardin Botanique,\\
                   54600 Villers-l\`es-Nancy, France\\
-                  8 d\'ecembre 2014 19:15 \\
+                  8 d\'ecembre 2014 21:30 \\
 Email: \texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}}
 }
 
@@ -38,15 +38,18 @@ is a complex and requiring task; to do it efficiently, one has to encounter
 many challenges that need to be overcome using the best trade-off between
 various and often contradictory objectives.\\
 A first key point is the software platform used for implementation: many
-specialized OSes for WSN motes have flourished, each one with its strengths
-and weaknesses. What are the most important features an OS can offer when
-trying to implement a new protocol into its network stack?\\
+specialized OSes for WSN motes are available, each one with its own set
+of features. What are the most important features an OS can offer when
+trying to implement a new protocol into its network stack? What software
+platform did we choose according to these requirements?\\
 A second point is the availability of development tools facilitating
-implementation and debugging. However, we'll see that such tools are not
-necessarily adequate for correct performance evaluation.\\
+implementation and debugging. Emulators and simulators are such tools.
+They dramatically facilitate development and debugging of WSN/IoT
+software. Are they also adequate for performance evaluation
+of MAC/RDC protocols?\\
 Finally, what is the impact of implementation choices on the performance
-of the resulting software? To what extent does optimization have an impact
-on protocols when their implementations are actually in use?\\
+of the final software? To what extent does optimization influence
+actual results during evaluation?\\
 We propose, in this article, our answers to these questions; answers we had
 to give while building and resting an implementation of our own MAC/RDC
 protocol.
@@ -68,8 +71,10 @@ The questions we had to answer were the following:
 \begin{itemize}
 \item \emph{Software Platform:} what features are needed in WSN/IoT operating
       systems to implement efficiently new high-performance MAC/RDC protocols?
-\item \emph{Development Tools:} what tools can help in the development and
-      debugging of such protocols?
+\item \emph{Development Tools:} Emulators and simulators are great tools
+      for helping in the development and debugging of such protocols.
+      Are they also fit for other uses, like performance evaluation
+      of software implementations?
 \item \emph{Implementation Best Practices:} what trade-offs have to be made
       between optimization on the one hand, and safety and modularity on the
       other hand when actually implementing these protocols? What is the
@@ -164,15 +169,19 @@ trying to do so provoking crashes or unexpected behavior.
 \end{itemize}
 
 \begin{observ}
-We definitely needed an OS with true real-time features (which basically
-implies pre-emptive multitasking), as well as fine granularity
-(the 32~KHz rate offered by \texttt{rtimer} is just fine) for
-event handling mechanism. Being able to leverage many instances
+For high performance MAC/RDC protocols, we have to synchronize precisely
+neighbouring nodes: the leaf nodes with their router, and the router
+with its sink.
+
+To that end, we definitely need an OS with true real-time features
+(which basically implies pre-emptive multitasking), as well as fine
+granularity (the 32~KHz rate offered by \texttt{rtimer} is just fine)
+for event handling mechanism. Being able to leverage many instances
 of such real-time mechanisms would be a great advantage.
-\end{observ}
 
 For all these reasons, we were unable to use Contiki OS to develop and
 implement our high-performance MAC/RDC protocols.
+\end{observ}
 
 \bigskip
 
@@ -228,7 +237,7 @@ It is currently the default RDC protocol proposed by the Contiki OS.
 This protocol is designed to work under the classical CSMA/CA MAC layer,
 and is based on the \emph{Low-Power Listening} (LPL) paradigm.
 
-\begin{figure}[!h]
+\begin{figure}[!ht]
 \centering
 \begin{tikzpicture}[>=latex]
 %sender
@@ -308,7 +317,7 @@ send their next packets at the optimal period to minimize the useless
 transmission of packets when the intended receiver is offline. The
 result of this mechanism is shown in figure \ref{FigContikiMACPhaseLock}.
 
-\begin{figure}[!h]
+\begin{figure}[!ht]
 \centering
 \begin{tikzpicture}[>=latex]
 %sender
@@ -415,7 +424,7 @@ duration (in microseconds) of the SP and WP for the currently beginning cycle.
 The whole S-CoSenS cycle workflow for a router is summarized in figure
 \ref{FigSCosensDutyCycle} hereafter.
 
-\begin{figure}[!h]
+\begin{figure}[!ht]
 \centering
 \begin{tikzpicture}[>=latex]
 %beacon
@@ -497,7 +506,7 @@ transceiver offline during the delay between the beacon and that WP
 will go back to sleep mode once its packet is transmitted.
 All of this procedure is shown in figure \ref{FigSCoSenSPktTx}.
 
-\begin{figure}[!h]
+\begin{figure}[!ht]
 \centering
 \begin{tikzpicture}[>=latex]
 %%router
@@ -663,7 +672,9 @@ The Cooja tool provided by the Contiki project \cite{Cooja} is very handy for
 developement and debugging. It is a convivial GUI that allows to perform
 simulations of whole networks or wireless devices, and embeds emulators
 that allow to mimic quite accurately motes based on MSP430 and AVR
-architectures.
+architectures. It has been, during our development effort, extremely helpful,
+especially for advanced debugging purposes, where it has proven to be at
+least as useful as hardware JTAG debuggers.
 
 \begin{observ}
 However, we discovered Cooja is not suited for precise and accurate
@@ -1086,8 +1097,8 @@ much safer, but slower.
 
 \begin{observ}
 There is clearly a trade-off between performance optimization and safety.
-In that case, it depends less on the software platform (OS) itself than
-on the implementation choices for the SPI bus driver.
+For loading the CC2440 TX buffer, it depends less on the software platform
+(OS) itself than on the implementation choices for the SPI bus driver.
 \end{observ}
 
 We tried to implement the ``unsafe'' SPI optimization on RIOT, and measured
@@ -1160,7 +1171,7 @@ Our contributions thus consist in the following:
 
 \item We determined that real-time features are necessary to implement
       efficient new MAC/RDC protocols---namely: fine grained timing
-      resolution ($<$1~ms, ideally in the order of 30~$\mu$s/32~KHz),
+      resolution ($<1$~ms, ideally in the order of 30~$\mu$s/32~KHz),
       availability of more than one instance of high-resolution (preferably
       hardware) timers---and have presented one software platform---the RIOT
       OS---offering such features.
@@ -1176,16 +1187,16 @@ Our contributions thus consist in the following:
       as implemented under Contiki OS release has largely the upper hand
       in duty cycle statistics.
 
-\item We discussed problems related to memory corruption we
-      encountered---because of very strong constraints on basic WSN motes
-      and the absence of a MPU mechanism---and the counter-measures needed
-      to handle these problems---on MPU-less architectures, the need to
-      survey constantly stack use and memory corruption, using code
-      added at the compilation stage.
+\item We encountered crash related to memory corruption---precisely: stack
+      overwritten by other data, because of very strong constraints on basic
+      WSN motes and the absence of a MPU mechanism---and envisioned the
+      counter-measures needed to handle these problems---i.e.: on MPU-less
+      architectures, the need to survey constantly stack use and memory
+      corruption, using code added at the compilation stage.
 
-\item We examined the influence of optimizations on implementation
+\item We evaluated the influence of optimizations on implementation
       performance---specifically, in the management of SPI bus in an
-      optimized or safe manner, which impact the speed of loading packets
+      optimized or safe manner, which impacts the speed of loading packets
       into radio transceiver by a factor of 2 to 3---at the expense of
       stability.
 
