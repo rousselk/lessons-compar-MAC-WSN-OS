@@ -25,7 +25,6 @@
 \IEEEauthorblockA{Universit\'e de Lorraine~/ LORIA~/ INRIA Nancy Grand-Est,\\
                   615, rue du Jardin Botanique,\\
                   54600 Villers-l\`es-Nancy, France\\
-                  8 d\'ecembre 2014 21:30 \\
 Email: \texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}}
 }
 
@@ -659,8 +658,8 @@ Considering the overhead of MAC/RDC layer, the two-hop transmission
 route---which means that the router has at a given time to communicate with
 either leaf nodes, either sink; thus effectively dividing bandwidth by two---,
 the large size of our 802.15.4 packets, we expect the ``very high'' scenario
-to be near the maximum effective data rate possible (less than 30~Kbit/s),
-and the ``extreme'' scenario to be well beyond channel exhaustion.
+to be near the maximum effective data rate possible, and the ``extreme''
+scenario to be well beyond channel exhaustion.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -672,9 +671,13 @@ The Cooja tool provided by the Contiki project \cite{Cooja} is very handy for
 developement and debugging. It is a convivial GUI that allows to perform
 simulations of whole networks or wireless devices, and embeds emulators
 that allow to mimic quite accurately motes based on MSP430 and AVR
-architectures. It has been, during our development effort, extremely helpful,
-especially for advanced debugging purposes, where it has proven to be at
-least as useful as hardware JTAG debuggers.
+architectures.
+
+It has been, during our development effort, extremely helpful, especially for
+advanced debugging purposes, where it has proven to be at least as useful as
+hardware JTAG debuggers. We can thus regret that there are no such emulators
+for other microcontroller architectures---like ARM---as they would also
+undoubtly dramatically facilitate development for such platforms.
 
 \begin{observ}
 However, we discovered Cooja is not suited for precise and accurate
@@ -1158,9 +1161,9 @@ whether the two studied protocols could handle heavy network loads, trying
 to push the envelope the farthest possible---knowing anyway that approaching
 the theoretical limit of 250~kbit/s of bandwith for the underlying IEEE
 802.15.4 radio medium is just impossible because of delays that are imposed
-both by the 802.15.4 standard (SFS, LFS), hardware limits of the transceivers,
-and overheads due to the various stacks of software layers (especially MAC
-and RDC).
+both by the 802.15.4 standard (SIFS, LIFS), hardware limits of the
+transceivers, and overheads due to the various stacks of software
+layers (especially MAC and RDC).
       
 We have, during the implementation of one of our new RDC protocols, overcome
 many problems that we have discussed in the present paper.
@@ -1185,7 +1188,9 @@ Our contributions thus consist in the following:
       the implementation of our protocol, S-CoSenS, seems to have an
       advantage in terms of QoS (PRR, end-to-end delays) while ContikiMAC
       as implemented under Contiki OS release has largely the upper hand
-      in duty cycle statistics.
+      in duty cycle statistics. We then see that it's important for a MAC/RDC
+      protocol to be able to carry heavy/burst traffic when needed, while
+      still keeping low duty cycle during light traffic periods.
 
 \item We encountered crash related to memory corruption---precisely: stack
       overwritten by other data, because of very strong constraints on basic
