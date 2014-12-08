@@ -545,55 +545,7 @@ in future production-ready implementations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Cooja: a tool for development, not evaluation}
-\label{SectCoojaDevNotEval}
-
-The Cooja tool provided by the Contiki project \cite{Cooja} is very handy for
-developement and debugging. It is a convivial GUI that allows to perform
-simulations of whole networks or wireless devices, and embeds emulators
-that allow to mimic quite accurately motes based on MSP430 and AVR
-architectures.
-
-However, we discovered it is not suited for precise and accurate
-performance evaluations.
-
-We constated, during our simulations, an anomaly in the MSPSim software
-(the MSP430 device simulator used by Cooja to emulate MSP430-based motes
-at the cycle level \cite{MSPSim}): \emph{the delay used by the simulator
-to load our large---111 bytes---IEEE 802.15.4 packets into the CC2420
-transceiver TX buffer is too long;} Table \ref{TblTXPktLoadDelays} shows
-the differences of delay for loading our packets between Cooja simulations
-and actual hardware executions.
-
-\begin{table}[!h]
-\centering
-\begin{tabular}{|l|r|r|}
-\hline
-Operating System       &  Cooja Sim.  & Hardware Test \\
-\hline
-RIOT OS                &   89 ticks   &  32 ticks \\ 
-Contiki OS             &   14 ticks   &   7 ticks \\
-``Bare metal'' (no OS) &   nn ticks   &  nn ticks \\
-\hline
-\end{tabular}
-\caption{Delays observed for loading packets into CC2420 TX buffer,
-using various software platforms.\\
-Values are given in ``ticks'' of \texttt{rtimer/hwtimer}, both of these
-timers incrementing at a rate of 32,768Hz. The unit is thus a fixed period
-of time equal to about 30.5 microseconds.}
-\label{TblTXPktLoadDelays}
-\end{table}
-
-We have thus determined that this problem occurs whatever OS is used
-on the motes. This problem seems to be caused by an overestimation
-of the delays caused by the operation of the SPI bus that links
-the MSP430 microcontroller to the CC2420 radio transceiver
-on the Z1 hardware.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Method and Benchmark}
+\section{Method and Benchmark for Evaluations}
 
 For our first experiments, we used, for practical reasons, the Cooja
 simulator rather than actual hardware. All the simulated nodes are
@@ -669,6 +621,11 @@ Extreme   &     100 ms    &  100      & 88,000 bit/s \\
 \label{TblDataRates}
 \end{table}
 
+Bandwidth saturation calculations showed that, for 110-byte 802.15.4 packets
+with this two-hop setup, the ``very high'' scenario is near the maximum
+effective data rate possible (less than 30~Kbit/s), while the ``extreme''
+scenario is well beyond channel exhaustion.
+
 For each scenario, we performed two kinds of simulations:
 \begin{itemize}
 \item a \emph{fixed packet number simulation}, during which each node emits
@@ -681,13 +638,62 @@ unspecified number of packets at the fixed rate; the simulation ends after
 \end{itemize}
 
 These different kinds of simulations allow us to easily compute respectively
-QoS (PRR, end-to-end delays) and duty cycle statistics, as we will now see
-in the next section.
+QoS (PRR, end-to-end delays) and duty cycle statistics, as we will see
+in section \ref{SectResults} below.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Cooja: a tool for development, not evaluation}
+\label{SectCoojaDevNotEval}
+
+The Cooja tool provided by the Contiki project \cite{Cooja} is very handy for
+developement and debugging. It is a convivial GUI that allows to perform
+simulations of whole networks or wireless devices, and embeds emulators
+that allow to mimic quite accurately motes based on MSP430 and AVR
+architectures.
+
+However, we discovered it is not suited for precise and accurate
+performance evaluations.
+
+We constated, during our simulations, an anomaly in the MSPSim software
+(the MSP430 device simulator used by Cooja to emulate MSP430-based motes
+at the cycle level \cite{MSPSim}): \emph{the delay used by the simulator
+to load our large---110 bytes---IEEE 802.15.4 packets into the CC2420
+transceiver TX buffer is too long;} Table \ref{TblTXPktLoadDelays} shows
+the differences of delay for loading our packets between Cooja simulations
+and actual hardware executions.
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+Operating System       &  Cooja Sim.  & Hardware Test \\
+\hline
+RIOT OS                &   89 ticks   &  32 ticks \\ 
+Contiki OS             &   14 ticks   &   7 ticks \\
+``Bare metal'' (no OS) &   nn ticks   &  nn ticks \\
+\hline
+\end{tabular}
+\caption{Delays observed for loading packets into CC2420 TX buffer,
+using various software platforms.\\
+Values are given in ``ticks'' of \texttt{rtimer/hwtimer}, both of these
+timers incrementing at a rate of 32,768Hz. The unit is thus a fixed period
+of time equal to about 30.5 microseconds.}
+\label{TblTXPktLoadDelays}
+\end{table}
+
+We have thus determined that this problem occurs whatever OS is used
+on the motes. This problem seems to be caused by an overestimation
+of the delays caused by the operation of the SPI bus that links
+the MSP430 microcontroller to the CC2420 radio transceiver
+on the Z1 hardware.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Results and Discussion}
+\label{SectResults}
 
 \subsection{Packet Reception Rate (PRR)}
 
@@ -1191,37 +1197,58 @@ achieve lower (better) duty cycles for S-CoSenS leaf nodes by implementing
 a mechanism similar to ContikiMAC's ``phase lock'' described above. This
 shall be the subject of one of our future experiments.
 
+One must also accept that there is no way to keep the very low power
+consumption feature when dealing with such heavy network loads, the
+motes' radio transceivers being heavily activated and solicited to
+handle that charge.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Conclusion and Future Works}
 
-{\textbf{(\`A REVOIR)}}
+We have, during the implementation of one of our new RDC protocols, overcome
+many problems that we have discussed in the present paper.
 
-We have built simulation scenarios to test whether our MAC/RDC protocol,
-S-CoSenS, could handle heavy network loads, trying to push the envelope
-the farthest possible---knowing anyway that approaching the theoretical
-limit of 250~kbit/s of bandwith for the underlying IEEE 802.15.4 radio
-medium is just impossible because of delays that are imposed both by
-the 802.15.4 standard (SFS, LFS), hardware limits of the transceivers,
-and overheads due to the various stacks of software layers (especially
-MAC and RDC).
+Our contributions thus consist in the following:
 
-We were able to show---with the limits and preventions discussed hereabove
-in section \ref{SectLimits}---that it performs quite well under these
-situations, and does it better than the reference software platform, in terms
-of PRR and packet transmission delays: it can handle quite gracefully some of
-the heavy loads we imposed on it during our simulations, managing to obtain
-a good to excellent QoS---that is: few packets lost during transmissions,
-and delays always contained under a reasonable limit.
-(Under extreme loads however, it becomes impossible to obtain satisfactory
-results for QoS: the radio medium becoming saturated causes the MAC/RDC
-layer to stall and become ineffective.)
+\begin{itemize}
 
-One must also accept that there is no way to keep the very low power
-consumption feature when dealing with such heavy network loads, the
-motes' radio transceivers being heavily activated and solicited to
-handle that charge.
+\item We determined that real-time features are necessary to implement
+      efficient new MAC/RDC protocols, and have presented one software
+      platform---the RIOT OS---offering such features.
+
+\item We described two implementation of complete and functional RDC
+      protocols, the well-known ContikiMAC and our new S-CoSenS, explaining
+      their differences in design and implementation.
+
+\item We demonstrated that the Cooja emulator, while being a very valuable
+      development and debugging tool, is not suited for performance
+      evaluation because of timing inaccuracies.
+
+\item We built simulation scenarios to test whether the two studied protocols
+      could handle heavy network loads, trying to push the envelope
+      the farthest possible---knowing anyway that approaching the theoretical
+      limit of 250~kbit/s of bandwith for the underlying IEEE 802.15.4 radio
+      medium is just impossible because of delays that are imposed both by
+      the 802.15.4 standard (SFS, LFS), hardware limits of the transceivers,
+      and overheads due to the various stacks of software layers (especially
+      MAC and RDC).
+
+\item We showed---with the limits and preventions discussed hereabove---that
+      the implementation of our protocol, S-CoSenS, seems to have an
+      advantage in terms of QoS (PRR, end-to-end delays) while ContikiMAC
+      as implemented under Contiki OS release has the upper hand in
+      duty cycle statistics.
+
+\item We discussed problems related to memory corruption we encountered,
+      and the counter-measures needed to handle these problems.
+
+\item We examined the influence of optimizations (specifically, in the
+      management of SPI bus) on implementation performance.
+
+\end{itemize}
+
 
 \bigskip
 
