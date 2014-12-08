@@ -1,6 +1,7 @@
 \documentclass[conference]{IEEEtran}
 
 \usepackage{amsmath}
+\usepackage{amsthm}
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{tikz}
@@ -15,8 +16,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\title{Some Lessons Learned through Implementation and Performance Evaluation
-       of Two MAC/RDC Protocols on WSN OS}
+\title{Practical Lessons Learned through Implementation and Performance
+       Evaluation of Two MAC/RDC Protocols on WSN OS}
 
 
 \author{
@@ -24,51 +25,44 @@
 \IEEEauthorblockA{Universit\'e de Lorraine~/ LORIA~/ INRIA Nancy Grand-Est,\\
                   615, rue du Jardin Botanique,\\
                   54600 Villers-l\`es-Nancy, France\\
+                  8 d\'ecembre 2014\\
 Email: \texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}}
 }
 
 
-%\keywords{Wireless Sensor Networks, Internet of Things, Heavy Load, QoS,
-%          MAC/RDC protocols, S-CoSenS, ContikiMAC}
-
-
-%Nécessité de s'intéresser au cas où les réseaux de WSN ont de fortes charges
-%à transmettre, ne serait-ce que ponctuellement ("bursts").
-
-%Std 802.15.4 : délai entre réception d'un paquet et envoi d'un acquittement
-%entre deux paquets successifs => rarement respectés.
-
 \maketitle
 
 \begin{abstract}
-Implementing new, high-performance MAC/RDC protocols requires
-real-time features, to be able to synchronize correctly between different
-unrelated devices. Such features are highly desirable for operating wireless
-sensor networks (WSN) that are designed to be part of the Internet of Things
-(IoT). Unfortunately the operating systems commonly used in this domain
-cannot provide such features.\\
-In this article, we describe our implementation of a high-performance MAC/RDC
-protocol, S-CoSenS, on RIOT OS, a real-time operating system for Wireless
-Sensor Networks (WSN) and the Internet of Things (IoT).\\
-We then evaluate the performances of our implementation, by comparing it with
-the well-known ContikiMAC protocol (running on Contiki OS), through
-simulations running on the Cooja emulator. We focus on QoS results,
-especially under heavy network loads.\\
-Our results show that our protocol performs very well, bringing noticeable
-improvements over ContikiMAC results under a large spectrum of network loads
-and configurations.
+Implementing new, high-performance MAC/RDC protocols on WSN/IoT motes
+is a complex and requiring task; to do it efficiently, one has to encounter
+many challenges that need to be overcome using the best trade-off between
+various and often contradictory objectives.\\
+A first key point is the software platform used for implementation: many
+specialized OSes for WSN motes have flourished, each one with its strengths
+and weaknesses. What are the most important features an OS can offer when
+trying to implement a new protocol into its network stack?\\
+A second point is the availability of development tools facilitating
+implementation and debugging. However, we'll see that such tools are not
+necessarily adequate for correct performance evaluation.\\
+Finally, what is the impact of implementation choices on the performance
+of the resulting software? To what extent does optimization have an impact
+on protocols when their implementations are actually in use?\\
+We propose, in this article, our answers to these questions; answers we had
+to give while building and resting an implementation of our own MAC/RDC
+protocol.
 \end{abstract}
 
-\IEEEpeerreviewmaketitle
+\newtheorem{observ}{Lesson}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introduction}
 
-In the present article, we will describe the various difficulties we had
-to encounter when implementing a new RDC protocol (S-CoSenS, described
-hereafter), as well as the solutions we found for these problems.
+In the present article, we describe the various difficulties we had
+to encounter when implementing a new \emph{Radio Duty Cycle} (RDC) protocol
+(S-CoSenS, described hereafter), as well as the solutions we found for
+these problems.
 
 The questions we had to answer were the following:
 \begin{itemize}
@@ -77,7 +71,7 @@ The questions we had to answer were the following:
 \item \emph{Development Tools:} what tools can help in the development and
       debugging of such protocols?
 \item \emph{Implementation Best Practices:} what trade-offs have to be made
-      between optimization one one hand, and safety and modularity on the
+      between optimization on the one hand, and safety and modularity on the
       other hand when actually implementing these protocols? What is the
       impact of such trade-offs on the performances of the implementation?
 \item \emph{Evaluation of Implementations:} what are these implementations'
@@ -87,6 +81,28 @@ The questions we had to answer were the following:
 We will---as our contribution---analyze our answers to these various
 questions.
 
+While evaluation and comparison of MAC/RDC protocols is quite common,
+the S-CoSenS protocol itself having been already compared in previous
+literature \cite{iQueueMAC}, the originality of the present paper is
+to list the obstacles that had to be overcome to fulfill the implementation
+and specific evaluation of this protocol against ContikiMAC.
+
+Thus the remainder of the paper is organized as follows:
+\begin{itemize}
+\item Section II will discuss about software platforms, the properties
+      we wish them to provide us, and which one we choosed. 
+\item Section III describes the two RDC protocols we wished to evaluate and
+      compare.
+\item Section IV describes the experimental setup used for our simulations.
+\item Section V focus on Cooja, and explains why it is not suited as an
+      performance evaluation tool.
+\item Section VI shows the results we obtained during our simulations,
+      details some problems we encountered during them, and how they can
+      be avoided or overcome.
+\item Finally, we will conclude by summarizing the contributions made in
+      the present paper.
+\end{itemize}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -95,7 +111,6 @@ questions.
 Specialized OSes for the resource-constrained devices that constitute
 wireless sensor networks have been designed, published, and made available
 for quite a long time.
-
 
 The current reference OS in the domain of WSN and IoT is \emph{Contiki}
 \cite{ContikiOS}. It is an open-source OS, which was first released
@@ -148,9 +163,16 @@ the kernel or the network stack---from the \texttt{rtimer} callbacks,
 trying to do so provoking crashes or unexpected behavior.
 \end{itemize}
 
+\begin{observ}
+We definitely needed an OS with true real-time features (which basically
+implies pre-emptive multitasking), as well as fine granularity
+(the 32~KHz rate offered by \texttt{rtimer} is just fine) for
+event handling mechanism. Being able to leverage many instances
+of such real-time mechanisms would be a great advantage.
+\end{observ}
+
 For all these reasons, we were unable to use Contiki OS to develop and
-implement our high-performance MAC/RDC protocols. We definitely needed
-an OS with efficient real-time features and event handling mechanism.
+implement our high-performance MAC/RDC protocols.
 
 \bigskip
 
@@ -165,7 +187,7 @@ to many devices powered by ARM, MSP430, and---more recently---AVR
 microcontrollers) and a comprehensive set of features, including
 a network stack.
 
-Moreover, it offers key features that are otherwise yet unknown in
+Moreover, it offers a set of key features that is otherwise uncommon in
 the WSN/IoT domain, the most important for us being:
 \begin{itemize}
 \item an efficient, interrupt-driven, tickless micro-kernel providing
@@ -177,8 +199,11 @@ the WSN/IoT domain, the most important for us being:
       with a resolution of 30~microseconds, instead of 8000~microseconds
       for Contiki OS.
 \end{itemize}
+
+\begin{observ}
 These features are what make RIOT a full-fledged \emph{real-time} operating
-system.
+system, that fulfills our needs.
+\end{observ}
 
 Thus, RIOT is a powerful real-time operating system, adapted to the
 limitations of deeply embedded hardware microcontrollers, while offering
@@ -203,30 +228,6 @@ new designs in RDC protocols on the software platform we choosed.
 It is currently the default RDC protocol proposed by the Contiki OS.
 This protocol is designed to work under the classical CSMA/CA MAC layer,
 and is based on the \emph{Low-Power Listening} (LPL) paradigm.
-
-It is technically a derivative of the classical X-MAC protocol \cite{XMAC}:
-its basic principle, fundamentally asynchronous, is that every node keeps
-its radio transceiver off as much as possible, only waking it up for short
-delay of radio medium listening at a fixed rate (by default, eight times
-per second in ContikiMAC). If, during the short amount of time the radio
-transceiver is on, data is sensed on the medium, the radio transceiver
-is kept on until the whole transmission is done; otherwise, the node
-goes back into ``radio silence mode'' to save energy.
-This ability to automatically adapt the duration of transceiver activity
-to the live traffic on radio channel is what makes ContikiMAC a
-\emph{traffic auto-adaptative} (or \emph{self-adaptative}) protocol,
-at least up to a certain extent.
-
-When a node has to emit a packet, it continuously emits it until the
-intended receiver nodes ``wakes up'' its radio transceiver, receives
-the transmitted data, and sends back an acknowledgement.
-
-The first specificity of ContikiMAC is that, during transmission, instead
-of emitting a specific preamble until the receiver is ready, then sending
-it the actual data packet, the data packet is directly emitted by the
-sender---it is its own preamble---so that receiver(s) can directly receive
-and acknowledge the data packet as soon as its radio is ready (see figure
-\ref{FigContikiMACDutyCycle} hereafter).
 
 \begin{figure}[!h]
 \centering
@@ -269,9 +270,34 @@ and acknowledge the data packet as soon as its radio is ready (see figure
 \end{tikzpicture}
 \caption{Transmission of a data packet with the ContikiMAC protocol.\\
          Gray boxes represent radio transceiver activation, while
-         black boxes represent packets' transmissions.}
+         black boxes represent packets' transmissions.\\
+         KWT is the keep-in-wakeup timeout delay used for handling
+         burst transmissions reception}
 \label{FigContikiMACDutyCycle}
 \end{figure}
+
+As shown in figure \ref{FigContikiMACDutyCycle}, it is technically
+a derivative of the classical X-MAC protocol \cite{XMAC}: its basic principle,
+fundamentally asynchronous, is that every node keeps its radio transceiver
+off as much as possible, only waking it up for short delay of radio medium
+listening at a fixed rate (by default, eight times per second in ContikiMAC).
+If, during the short amount of time the radio transceiver is on, data
+is sensed on the medium, the radio transceiver is kept on until the whole
+transmission is done; otherwise, the node goes back into ``radio silence
+mode'' to save energy. This ability to automatically adapt the duration
+of transceiver activity to the live traffic on radio channel is what makes
+ContikiMAC a \emph{traffic auto-adaptative} (or \emph{self-adaptative})
+protocol, at least up to a certain extent.
+
+When a node has to emit a packet, it continuously emits it until the
+intended receiver nodes ``wakes up'' its radio transceiver, receives
+the transmitted data, and sends back an acknowledgement.
+
+The first specificity of ContikiMAC is that, during transmission, instead
+of emitting a specific preamble until the receiver is ready, then sending
+it the actual data packet, the data packet is directly emitted by the
+sender---it is its own preamble---so that receiver(s) can directly receive
+and acknowledge the data packet as soon as its radio is ready.
 
 The second specificity is the presence of an optimization mechanism named
 \emph{``transmission phase lock''}: senders note the time when they receive
@@ -281,8 +307,7 @@ supposed to be ready to receive packets. Thus, senders can synchronize
 with nodes that have previously received their transmissions, and can
 send their next packets at the optimal period to minimize the useless
 transmission of packets when the intended receiver is offline. The
-result of this mechanism is shown in figure \ref{FigContikiMACPhaseLock}
-hereafter.
+result of this mechanism is shown in figure \ref{FigContikiMACPhaseLock}.
 
 \begin{figure}[!h]
 \centering
@@ -341,10 +366,10 @@ timeout period (KWT) observed by ContikiMAC after each packet reception
 
 \subsection{Our first design: the S-CoSenS RDC protocol}
 
-The first RDC protocol we wanted to implement is S-CoSenS, which
-is designed to work with the IEEE 802.15.4 MAC and physical layers. Like
-ContikiMAC, it is designed to work with the classical (i.e.: beacon-less)
-CSMA/CA MAC layer.
+The first RDC protocol we wanted to implement is S-CoSenS \cite{TheseBNefzi},
+which is designed to work with the IEEE 802.15.4 MAC and physical layers.
+Like ContikiMAC, it is designed to work with the classical
+(i.e.: beacon-less) CSMA/CA MAC layer.
 
 It is an evolution of the already published CoSenS protocol \cite{CosensConf}:
 it adds to the latter a sleeping period for energy saving.
@@ -545,7 +570,7 @@ in future production-ready implementations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Method and Benchmark for Evaluations}
+\section{Experimental Setup}
 
 For our first experiments, we used, for practical reasons, the Cooja
 simulator rather than actual hardware. All the simulated nodes are
@@ -599,11 +624,12 @@ loads. The loads were generated by the application loaded on the 10 leaf
 nodes: they were programmed to generate large 802.15.4 network packets
 (90 bytes of payload, which translates to an actual packet size of
 110 bytes) at a fixed rate, with random jitters in the interval of
-$[ 0.5 L , 1.5  L ]$, with $L$ being the targeted inter-arrival
-period. The different setups are described in table \ref{TblDataRates}:
-the table gives the arrival interval between two consecutive packets sent
-by each mote (PAI), the average number of packets emitted every second
-for all of the 10 leaf nodes, and the expected resulting data rate.
+$[ 0.5\,\mathrm{PAI} , 1.5\,\mathrm{PAI} ]$, with PAI being the targeted
+Packet Arrival Interval period (i.e.: the inter-arrival between two
+consecutive packets sent by each mote). The different setups are described
+in table \ref{TblDataRates}: the table gives the targeted average PAI,
+the average number of packets emitted every second for all of the
+10 leaf nodes, and the expected resulting data rate.
 
 \begin{table}[htb]
 \centering
@@ -621,25 +647,12 @@ Extreme   &     100 ms    &  100      & 88,000 bit/s \\
 \label{TblDataRates}
 \end{table}
 
-Bandwidth saturation calculations showed that, for 110-byte 802.15.4 packets
-with this two-hop setup, the ``very high'' scenario is near the maximum
-effective data rate possible (less than 30~Kbit/s), while the ``extreme''
-scenario is well beyond channel exhaustion.
-
-For each scenario, we performed two kinds of simulations:
-\begin{itemize}
-\item a \emph{fixed packet number simulation}, during which each node emits
-500 packets at the fixed rate, then turns off; the simulation ends when all
-nodes have transmitted their quota of packets;
-
-\item a \emph{fixed duration simulation}, during which each node emits an
-unspecified number of packets at the fixed rate; the simulation ends after
-10 minutes.
-\end{itemize}
-
-These different kinds of simulations allow us to easily compute respectively
-QoS (PRR, end-to-end delays) and duty cycle statistics, as we will see
-in section \ref{SectResults} below.
+Considering the overhead of MAC/RDC layer, the two-hop transmission
+route---which means that the router has at a given time to communicate with
+either leaf nodes, either sink; thus effectively dividing bandwidth by two---,
+the large size of our 802.15.4 packets, we expect the ``very high'' scenario
+to be near the maximum effective data rate possible (less than 30~Kbit/s),
+and the ``extreme'' scenario to be well beyond channel exhaustion.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -653,8 +666,10 @@ simulations of whole networks or wireless devices, and embeds emulators
 that allow to mimic quite accurately motes based on MSP430 and AVR
 architectures.
 
+\begin{observ}
 However, we discovered it is not suited for precise and accurate
 performance evaluations.
+\end{observ}
 
 We constated, during our simulations, an anomaly in the MSPSim software
 (the MSP430 device simulator used by Cooja to emulate MSP430-based motes
@@ -668,25 +683,25 @@ and actual hardware executions.
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
-Operating System       &  Cooja Sim.  & Hardware Test \\
+Operating System / SPI Driver &  Cooja Sim.  & Hardware Test \\
 \hline
-RIOT OS                &   89 ticks   &  32 ticks \\ 
-Contiki OS             &   14 ticks   &   7 ticks \\
-``Bare metal'' (no OS) &   nn ticks   &  nn ticks \\
+RIOT OS / Standard (Safe)     &   89 ticks   &  32 ticks \\ 
+RIOT OS / Fast SPI Write      &   36 ticks   &  14 ticks \\
+Contiki OS / Fast SPI Write   &   14 ticks   &   7 ticks \\
 \hline
 \end{tabular}
 \caption{Delays observed for loading packets into CC2420 TX buffer,
-using various software platforms.\\
+using various software platforms and implementations.\\
 Values are given in ``ticks'' of \texttt{rtimer/hwtimer}, both of these
 timers incrementing at a rate of 32,768Hz. The unit is thus a fixed period
 of time equal to about 30.5 microseconds.}
 \label{TblTXPktLoadDelays}
 \end{table}
 
-We have thus determined that this problem occurs whatever OS is used
-on the motes. This problem seems to be caused by an overestimation
-of the delays caused by the operation of the SPI bus that links
-the MSP430 microcontroller to the CC2420 radio transceiver
+We have thus determined that this problem occurs whatever OS and
+implementation is used on the motes. This problem seems to be caused
+by an overestimation of the delays caused by the operation of the SPI bus
+that links the MSP430 microcontroller to the CC2420 radio transceiver
 on the Z1 hardware.
 
 
@@ -699,10 +714,6 @@ on the Z1 hardware.
 
 We use the PRR as the first indicator to quantify the QoS obtained by
 using the examined protocols.
-
-Using the \emph{fixed packet number simulations}, we can easily compute the
-rate of packets that arrive to destination, compared to the known number
-of packets emitted by the nodes.
 
 Thus, we were able to determine that \emph{the only parameter common to
 both protocols} that has actually influence on the PRR is the length of
@@ -752,30 +763,31 @@ These results are obtained with fixed packet number simulations.
 
 \begin{figure}[tbph]
   \centering
-  \includegraphics[width=7.5cm]{graphes/PRR8Hz.png}
+  \includegraphics[width=7cm]{graphes/PRR8Hz.png}
   \caption{PRR results for 125~ms subframe/check interval}
   \label{FigSuccessRate8Hz}
 \end{figure}
 \begin{figure}[tbph]
   \centering
-  \includegraphics[width=7.5cm]{graphes/PRR16Hz.png}
+  \includegraphics[width=7cm]{graphes/PRR16Hz.png}
   \caption{PRR results for 62~ms subframe/check interval}
   \label{FigSuccessRate16Hz}
 \end{figure}
 \begin{figure}[tbph]
   \centering
-  \includegraphics[width=7.5cm]{graphes/PRR32Hz.png}
+  \includegraphics[width=7cm]{graphes/PRR32Hz.png}
   \caption{PRR results for 31~ms subframe/check interval}
   \label{FigSuccessRate32Hz}
 \end{figure}
 \begin{figure}[tbph]
   \centering
-  \includegraphics[width=7.5cm]{graphes/PRRstabilitySCoSenS.png}
+  \includegraphics[width=7cm]{graphes/PRRstabilitySCoSenS.png}
   \caption{Combined PRR results for S-CoSenS,
            according to subframe duration}
   \label{FigSuccessRateSCoSenS}
 \end{figure}
 
+\begin{observ}
 The data shown in figures \ref{FigSuccessRate8Hz} to
 \ref{FigSuccessRateSCoSenS} show us many facts:
 
@@ -796,6 +808,7 @@ The data shown in figures \ref{FigSuccessRate8Hz} to
       scenario).
 
 \end{itemize}
+\end{observ}
 
 Analysis of the detailed results including the number of retries needed
 to transmit each successful packet (not given in this article for space
@@ -838,12 +851,10 @@ to avoid these difficulties by design.
 
 \subsection{End-to-end Transmission Delays}
 
-Using the results of the same experiments, we analyzed the traces of
-exchanged packets during simulations, and computed the delays that takes each
-successfully transmitted packet to go from its originating leaf node up to
-the sink---that is: the duration of its two-hop transmission.
-This is the second indicator for quantifying QoS we studied
-in our experiments.
+We computed the delays that takes each successfully transmitted packet to go
+from its originating leaf node up to the sink---that is: the duration of its
+two-hop transmission. This is the second indicator for quantifying QoS
+we studied in our experiments.
 
 The results we obtained are shown in figures \ref{FigDelays8Hz} to
 \ref{FigDelaysSCoSenS}. These figures show the mean delay for
@@ -854,30 +865,31 @@ logarithmic scale, for better readability.
 
 \begin{figure}[tbph]
   \centering
-  \includegraphics[width=7.5cm]{graphes/Delays8Hz.png}
+  \includegraphics[width=7cm]{graphes/Delays8Hz.png}
   \caption{Transmission delay means for 125~ms subframe/check interval}
   \label{FigDelays8Hz}
 \end{figure}
 \begin{figure}[tbph]
   \centering
-  \includegraphics[width=7.5cm]{graphes/Delays16Hz.png}
+  \includegraphics[width=7cm]{graphes/Delays16Hz.png}
   \caption{Transmission delay means for 62~ms subframe/check interval}
   \label{FigDelays16Hz}
 \end{figure}
 \begin{figure}[tbph]
   \centering
-  \includegraphics[width=7.5cm]{graphes/Delays32Hz.png}
+  \includegraphics[width=7cm]{graphes/Delays32Hz.png}
   \caption{Transmission delay means for 31~ms subframe/check interval}
   \label{FigDelays32Hz}
 \end{figure}
 \begin{figure}[tbph]
   \centering
-  \includegraphics[width=7.5cm]{graphes/DelaysStabilitySCoSenS.png}
+  \includegraphics[width=7cm]{graphes/DelaysStabilitySCoSenS.png}
   \caption{Combined Transmission delay averages for S-CoSenS,
            according to subframe duration}
   \label{FigDelaysSCoSenS}
 \end{figure}
 
+\begin{observ}
 These results also indicate that:
 
 \begin{itemize}
@@ -894,6 +906,7 @@ These results also indicate that:
 \end{itemize}
 
 These observation are strictly similar to those made for PRR results.
+\end{observ}
 
 This very large increase in end-to-end transmission delays for ContikiMAC
 can be interpreted as ``overzealousness'': a packet can be retransmitted
@@ -921,14 +934,15 @@ to obtain a better trade-off between these two goals than ContikiMAC.
 
 \subsection{Duty Cycles}
 
-Using the \emph{fixed duration simulations}, we can easily have Cooja compute
-the accurate duty cycle statistics for all of the virtual motes simulated.
-These statistics are a strong indicator for quantifying energy consumption,
-since the radio transceiver is, by far, the most energy-consuming hardware
-in the motes that constitute WSNs.
+Cooja can easily compute the accurate duty cycle statistics for all of
+the virtual motes simulated. These statistics are a strong indicator for
+quantifying energy consumption, since the radio transceiver is, by far,
+the most energy-consuming hardware in the motes that constitute WSNs.
 
 The results we obtained for duty cycle statistics are presented in tables
-\ref{TblDutyCyclesContikiMAC} and \ref{TblDutyCyclesSCoSenS}.
+\ref{TblDutyCyclesContikiMAC} and \ref{TblDutyCyclesSCoSenS}. Note that
+due to the differences in PRR, only comparing duty cycle results for
+a channel check interval/subframe duration of 31~ms makes sense.
 
 %%% ContikiMAC duty cycles
 \begin{table}[tbph]
@@ -938,40 +952,6 @@ The results we obtained for duty cycle statistics are presented in tables
  & \multicolumn{3}{|c|}{PACKET ARRIVAL INTERVAL}\\
 \hline
  & 1500 ms & 1000 ms & 500 ms \\
-\hline
-
-\multicolumn{4}{|c|}{Channel Check Interval = 125~ms}\\
-\hline
- ROUTER & \multicolumn{3}{|c|}{ }\\
-\hline
-Transceiver Active & 8.62\% & 11.12\% & 14.98\% \\
-Radio TX           & 1.35\% &  1.50\% &  1.33\% \\
-Radio RX           & 2.55\% &  3.66\% &  5.77\% \\
-Radio Interference & 0.93\% &  1.27\% &  1.61\% \\
-\hline
- NODES (average) & \multicolumn{3}{|c|}{ }\\
-\hline
-Transceiver Active & 3.38\% & 3.87\% & 4.79\% \\
-Radio TX           & 1.42\% & 1.65\% & 2.21\% \\
-Radio RX           & 0.19\% & 0.22\% & 0.26\% \\
-Radio Interference & 0.15\% & 0.18\% & 0.23\% \\
-\hline
-
-\multicolumn{4}{|c|}{Channel Check Interval = 62~ms}\\
-\hline
- ROUTER & \multicolumn{3}{|c|}{ }\\
-\hline
-Transceiver Active & 11.55\% & 15.41\% & 21.12\% \\
-Radio TX           &  2.60\% &  3.22\% &  2.25\% \\
-Radio RX           &  2.74\% &  4.05\% &  7.30\% \\
-Radio Interference &  0.39\% &  1.26\% &  2.59\% \\
-\hline
- NODES (average) & \multicolumn{3}{|c|}{ }\\
-\hline
-Transceiver Active & 4.16\% & 6.56\% & 8.80\% \\
-Radio TX           & 1.11\% & 2.15\% & 3.21\% \\
-Radio RX           & 0.47\% & 0.70\% & 0.82\% \\
-Radio Interference & 0.14\% & 0.43\% & 0.75\% \\
 \hline
 
 \multicolumn{4}{|c|}{Channel Check Interval = 31~ms}\\
@@ -1006,40 +986,6 @@ Radio Interference & 0.11\% & 0.21\% &  1.13\% \\
  & 1500 ms & 1000 ms & 500 ms \\
 \hline
 
-\multicolumn{4}{|c|}{Subframe Duration = 125~ms}\\
-\hline
- ROUTER & \multicolumn{3}{|c|}{ }\\
-\hline
-Transceiver Active & 75.60\% & 79.01\% & 76.18\% \\
-Radio TX           &  4.20\% &  4.70\% &  8.26\% \\
-Radio RX           &  3.92\% &  4.53\% &  8.90\% \\
-Radio Interference &  0.86\% &  1.25\% &  4.29\% \\
-\hline
- NODES (average) & \multicolumn{3}{|c|}{ }\\
-\hline
-Transceiver Active & 9.02\% & 11.45\% & 27.37\% \\
-Radio TX           & 0.55\% &  0.68\% &  1.70\% \\
-Radio RX           & 0.97\% &  1.32\% &  5.48\% \\
-Radio Interference & 0.14\% &  0.23\% &  1.70\% \\
-\hline
-
-\multicolumn{4}{|c|}{Subframe Duration = 62~ms}\\
-\hline
- ROUTER & \multicolumn{3}{|c|}{ }\\
-\hline
-Transceiver Active & 67.84\% & 70.47\% & 76.24\% \\
-Radio TX           &  4.52\% &  5.03\% &  8.78\% \\
-Radio RX           &  3.82\% &  4.45\% &  9.05\% \\
-Radio Interference &  0.91\% &  1.31\% &  4.75\% \\
-\hline
- NODES (average) & \multicolumn{3}{|c|}{ }\\
-\hline
-Transceiver Active & 6.78\% & 8.73\% & 23.27\% \\
-Radio TX           & 0.53\% & 0.66\% &  1.76\% \\
-Radio RX           & 0.74\% & 1.03\% &  4.45\% \\
-Radio Interference & 0.12\% & 0.20\% &  1.56\% \\
-\hline
-
 \multicolumn{4}{|c|}{Subframe Duration = 31~ms}\\
 \hline
  ROUTER & \multicolumn{3}{|c|}{ }\\
@@ -1062,13 +1008,13 @@ Radio Interference & 0.16\% & 0.22\% &  3.98\% \\
 \label{TblDutyCyclesSCoSenS}
 \end{table}
 
+\begin{observ}
 These duty cycle results clearly show that ContikiMAC has here a significant
 advantage. Transceiver activity rates and reception time (``radio RX'')
 are always lower---that is: better---for ContikiMAC than for S-CoSenS.
-
-For transceiver activity on router nodes, the difference is particularily
-dramatic, mainly because we defined the $\mathrm{WP}_{min}$ parameter
-to a high value (half of the inter-arrival period) to ensure good PRR.
+Especially for transceiver activity on router nodes, the difference is
+particularily dramatic.
+\end{observ}
 
 ContikiMAC proves here that it is indeed a \emph{very low power protocol}.
 
@@ -1092,10 +1038,12 @@ packet queue memory space: when the outgoing queue was full, packet data
 were thus regularly overwriting system stack, resulting of course in
 unrecoverable software failures.
 
+\begin{observ}
 This issue is due to the very limited amount of data RAM in the MSP430 used
 in Z1 motes (8 Kb RAM total), combined with the absence of \emph{Memory
 Protection Unit} (MPU) in this microcontroller architecture, thus allowing
 for silent and undetectable memory corruption problems.
+\end{observ}
 
 While using MCUs with more RAM can probably avoid this kind of problem from
 occuring, detecting and handling it correctly and systematically needs either:
@@ -1135,30 +1083,18 @@ loading these flags, and only synchronizes for the next byte transfer by
 waiting the SPI bus to be ready. While Contiki solution is clearly much
 faster, it is also unsafe since unable to detect correctly any failure
 that may occur on the SPI bus; RIOT implementation is on the contrary
-much safer, but slower. This is again a trade-off, between performance
-optimization and safety.
+much safer, but slower.
+
+\begin{observ}
+This is again a trade-off, between performance optimization and safety.
+In that case, it depends less on the software platform (OS) itself than
+on the implementation choices for the SPI bus driver.
+\end{observ}
 
 We tried to implement the ``unsafe'' SPI optimization on RIOT, and measured
 the speed difference between both versions under the same software platform.
-The results are shown in table \ref{TblRIOTLoadDelays} hereafter.
-
-\begin{table}[!h]
-\centering
-\begin{tabular}{|l|r|r|}
-\hline
-RIOT OS Implementation &  Cooja Sim.  & Hardware Test \\
-\hline
-Standard (Safe)        &   89 ticks   &  32 ticks \\ 
-Fast SPI Write         &   36 ticks   &  14 ticks \\
-\hline
-\end{tabular}
-\caption{Delays observed for loading packets into CC2420 TX buffer, under
-different implementation of SPI driver for RIOT OS.\\
-Values are given in ``ticks'' of \texttt{rtimer/hwtimer}, both of these
-timers incrementing at a rate of 32,768Hz. The unit is thus a fixed period
-of time equal to about 30.5 microseconds.}
-\label{TblRIOTLoadDelays}
-\end{table}
+The results are shown in table \ref{TblTXPktLoadDelays} in section
+\ref{SectCoojaDevNotEval}.
 
 We can still note, however, that the speed penalty imposed to S-CoSenS by
 RIOT OS SPI subsystem did not prevent it from obtaining superior QoS
@@ -1170,10 +1106,8 @@ performance.
 \label{SectLimits}
 
 The current work has of course its limitations. Its main drawback is that
-\emph{it is only based on simulations}, which makes it vulnerable to
-simulation tools' weaknesses (cf. section \ref{SectCoojaDevNotEval}).
-To be truly accurate, we would need to run these tests
-on actual hardware.
+\emph{it is only based on simulations}. To be truly accurate, we would need
+to run these tests on actual hardware.
 
 Due to the delays overestimation by the emulator, we can expect results on
 real hardware to be better than those we have observed in our simultations.
@@ -1200,13 +1134,24 @@ shall be the subject of one of our future experiments.
 One must also accept that there is no way to keep the very low power
 consumption feature when dealing with such heavy network loads, the
 motes' radio transceivers being heavily activated and solicited to
-handle that charge.
+handle the traffic.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Conclusion and Future Works}
 
+We described two implementation of complete and functional RDC protocols,
+the well-known ContikiMAC and our new S-CoSenS, explaining their differences
+in design and implementation. We then built simulation scenarios to test
+whether the two studied protocols could handle heavy network loads, trying
+to push the envelope the farthest possible---knowing anyway that approaching
+the theoretical limit of 250~kbit/s of bandwith for the underlying IEEE
+802.15.4 radio medium is just impossible because of delays that are imposed
+both by the 802.15.4 standard (SFS, LFS), hardware limits of the transceivers,
+and overheads due to the various stacks of software layers (especially MAC
+and RDC).
+      
 We have, during the implementation of one of our new RDC protocols, overcome
 many problems that we have discussed in the present paper.
 
@@ -1215,42 +1160,36 @@ Our contributions thus consist in the following:
 \begin{itemize}
 
 \item We determined that real-time features are necessary to implement
-      efficient new MAC/RDC protocols, and have presented one software
-      platform---the RIOT OS---offering such features.
-
-\item We described two implementation of complete and functional RDC
-      protocols, the well-known ContikiMAC and our new S-CoSenS, explaining
-      their differences in design and implementation.
+      efficient new MAC/RDC protocols---namely: fine grained timing
+      resolution ($<$1~ms, ideally in the order of 30~$\mu$s/32~KHz),
+      availability of more than one instance of high-resolution (preferably
+      hardware) timers---and have presented one software platform---the RIOT
+      OS---offering such features.
 
 \item We demonstrated that the Cooja emulator, while being a very valuable
       development and debugging tool, is not suited for performance
-      evaluation because of timing inaccuracies.
-
-\item We built simulation scenarios to test whether the two studied protocols
-      could handle heavy network loads, trying to push the envelope
-      the farthest possible---knowing anyway that approaching the theoretical
-      limit of 250~kbit/s of bandwith for the underlying IEEE 802.15.4 radio
-      medium is just impossible because of delays that are imposed both by
-      the 802.15.4 standard (SFS, LFS), hardware limits of the transceivers,
-      and overheads due to the various stacks of software layers (especially
-      MAC and RDC).
+      evaluation because of timing inaccuracies---specifically: overstimation
+      of delays related to SPI bus operation.
 
 \item We showed---with the limits and preventions discussed hereabove---that
       the implementation of our protocol, S-CoSenS, seems to have an
       advantage in terms of QoS (PRR, end-to-end delays) while ContikiMAC
-      as implemented under Contiki OS release has the upper hand in
-      duty cycle statistics.
+      as implemented under Contiki OS release has largely the upper hand
+      in duty cycle statistics.
 
-\item We discussed problems related to memory corruption we encountered,
-      and the counter-measures needed to handle these problems.
+\item We discussed problems related to memory corruption we
+      encountered---because of very strong constraints on basic WSN motes
+      and the absence of a MPU mechanism---and the counter-measures needed
+      to handle these problems---on MPU-less architectures, the need to
+      survey constantly stack use and memory corruption, using code
+      added at the compilation stage.
 
-\item We examined the influence of optimizations (specifically, in the
-      management of SPI bus) on implementation performance.
+\item We examined the influence of optimizations---specifically, in the
+      management of SPI bus in an optimized or safe manner---on
+      implementation performance.
 
 \end{itemize}
 
-
-\bigskip
 
 In the future, we would like to try other, more powerful hardware platforms
 with the same scenarii, and try using different MAC and RDC layers in
