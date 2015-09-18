@@ -1,11 +1,11 @@
-\documentclass[conference]{IEEEtran}
+\documentclass[12pt,a4paper]{article}
 
+\usepackage[T1]{fontenc}
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{tikz}
-
 
 
 \begin{document}
@@ -19,20 +19,20 @@
 \title{Practical Lessons Learned through Implementation and Performance
        Evaluation of Two MAC/RDC Protocols on WSN OS}
 
-
 \author{
-\IEEEauthorblockN{K\'evin Roussel, Ye-Qiong Song and Olivier Zendra}
-\IEEEauthorblockA{Universit\'e de Lorraine~/ LORIA~/ INRIA Nancy Grand-Est,\\
-                  615, rue du Jardin Botanique,\\
-                  54600 Villers-l\`es-Nancy, France\\
-Email: \texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}}
+K\'evin Roussel, Ye-Qiong Song and Olivier Zendra\\
+Universit\'e de Lorraine~/ LORIA~/ INRIA Nancy Grand-Est,\\
+615, rue du Jardin Botanique,\\
+54600 Villers-l\`es-Nancy, France\\
+Email: \texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}
 }
 
+\date{}
 
 \maketitle
 
 \begin{abstract}
-Implementing new, high-performance MAC/RDC protocols on WSN/IoT motes
+Implementing new, high-performance MAC/RDC protocols on WSN/ IoT motes
 is a complex and requiring task; to do it efficiently, one has to encounter
 many challenges that need to be overcome using the best trade-off between
 various and often contradictory objectives.\\
@@ -200,7 +200,7 @@ Moreover, it offers a set of key features that is otherwise uncommon in
 the WSN/IoT domain, the most important for us being:
 \begin{itemize}
 \item an efficient, interrupt-driven, tickless micro-kernel providing
-      pre-emptive multitasking;
+      preemptive multitasking;
 \item a highly efficient use of \emph{hardware timers}: all of them can be
       used concurrently (especially since the kernel is tickless), offering
       the ability to schedule actions with high precision; on low-end
@@ -1200,7 +1200,7 @@ Our contributions thus consist in the following:
       corruption, using code added at the compilation stage.
 
 \item We evaluated the influence of optimizations on implementation
-      performance---specifically, in the management of SPI bus in an
+      perfor\-mance---specifically, in the management of SPI bus in an
       optimized or safe manner, which impacts the speed of loading packets
       into radio transceiver by a factor of 2 to 3---at the expense of
       stability.
@@ -1221,7 +1221,6 @@ the network stack of the RIOT operating system.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\vfill
 \bibliographystyle{IEEEtran}
 {\small
 \bibliography{wowmom2015}}
