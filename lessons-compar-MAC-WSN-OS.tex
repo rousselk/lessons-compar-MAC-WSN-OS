@@ -1,14 +1,14 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[12pt,twoside,a4paper]{article}
 
 \usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{tikz}
+\usepackage{RR}
 
-
-\begin{document}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -16,52 +16,112 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\title{Practical Lessons Learned through Implementation and Performance
-       Evaluation of Two MAC/RDC Protocols on WSN OS}
+%\RRNo{}
 
-\author{
-K\'evin Roussel, Ye-Qiong Song and Olivier Zendra\\
-Universit\'e de Lorraine~/ LORIA~/ INRIA Nancy Grand-Est,\\
-615, rue du Jardin Botanique,\\
-54600 Villers-l\`es-Nancy, France\\
-Email: \texttt{\{Kevin.Roussel,Ye-Qiong.Song,Olivier.Zendra\}@inria.fr}
+\RRetitle{Practical Lessons Learned through Implementation and Performance
+          Evaluation of Two MAC/RDC Protocols on WSN OS}
+
+\titlehead{Practical Lessons Learned through Implementation\ldots}
+
+\RRauthor{
+K\'evin Roussel
+\and
+Ye-Qiong Song
+\and
+Olivier Zendra
 }
 
-\date{}
+\RRequipe{Madynes}
 
-\maketitle
+\RRtitle{Leçons pratiques apprises via l'implémentation et l'évaluation
+         de performances de deux protocoles MAC~/ RDC sur des OS pour
+         réseaux de capteurs sans-fil}
 
-\begin{abstract}
+\RRabstract{
 Implementing new, high-performance MAC/RDC protocols on WSN/ IoT motes
 is a complex and requiring task; to do it efficiently, one has to encounter
 many challenges that need to be overcome using the best trade-off between
-various and often contradictory objectives.\\
+various and often contradictory objectives.
+
 A first key point is the software platform used for implementation: many
 specialized OSes for WSN motes are available, each one with its own set
 of features. What are the most important features an OS can offer when
 trying to implement a new protocol into its network stack? What software
-platform did we choose according to these requirements?\\
+platform did we choose according to these requirements?
+
 A second point is the availability of development tools facilitating
 implementation and debugging. Emulators and simulators are such tools.
-They dramatically facilitate development and debugging of WSN/IoT
-software. Are they also adequate for performance evaluation
-of MAC/RDC protocols?\\
+They dramatically help to develop and debug WSN/IoT software.
+Are they also adequate for performance evaluation of MAC/RDC protocols?
+
 Finally, what is the impact of implementation choices on the performance
 of the final software? To what extent does optimization influence
-actual results during evaluation?\\
-We propose, in this article, our answers to these questions; answers we had
-to give while building and resting an implementation of our own MAC/RDC
+actual results during evaluation?
+
+We propose, in this report, our answers to these questions; answers we had
+to give while building and testing an implementation of our own MAC/RDC
 protocol.
-\end{abstract}
+}
+
+\RRkeyword{MAC/RDC protocols, WSN, dedicated OS, network stacks,
+           implementation, performance, evaluation}
+
+\RRresume{
+L'implémentation de nouveaux protocoles MAC~/ RDC à hautes performances pour
+les noeuds de réseaux de capteurs sans-fil (WSN) et de l'Internet des Objets
+(IoT) est une tâche complexe et exigeante~; pour la réaliser efficacement,
+il est nécessaire de faire face à de nombreux défis à surmonter en trouvant
+le meilleur compromis entre des objectifs souvent contradictoires.
+
+Un premier point-clé est la plate-forme logicielle utilisée pour
+l'implémen\-tation~: de nombreux OS spécialisés pour les WSN sont
+disponibles, chacun ayant son propre ensemble de fonctionnalités.
+Quelles sont les fonctionnalités les plus importantes qu'un OS doit offrir
+pour faciliter l'implémentation d'un nouveau protocole dans sa pile réseau~?
+Quelle plate-forme logicielle avons nous choisie en fonction de ces besoins~?
+
+Un deuxième point-clé est la disponibilité d'outils de développement
+facilitant l'implémentation et le déboguage. Les émulateurs et simulateurs
+font partie de cette catégorie d'outils. Ils aident grandement au
+développement et au déboguage de logiciels pour les WSN et l'IoT.
+Sont-ils également adéquats pour l'évaluation des performances des
+protocoles MAC~/ RDC~?
+
+Enfin, quel est l'impact des choix d'implémentation sur les performances
+du logiciel terminé~? Jusqu'à quel point l'optimisation influence-t-elle
+les résultats réels obtenus durant l'évaluation~?
+
+Nous proposons, dans ce rapport, nos réponses à ces questions~; réponses
+que nous avons dû donner durant l'implémentation et les tests de notre
+propre protocole MAC~/ RDC.
+}
+
+\RRmotcle{protocoles MAC~/ RDC, réseaux de capteurs sans-fil, OS dédiés,
+          piles réseau, implémentations, performances, évaluation}
+
+
+\RRdate{March 2015}
+
+\RCNancy
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                               80 COLONNES                                %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
 
 \newtheorem{observ}{Lesson}
+
+\makeRR
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introduction}
 
-In the present article, we describe the various difficulties we had
+In the present report, we describe the various difficulties we had
 to encounter when implementing a new \emph{Radio Duty Cycle} (RDC) protocol
 (S-CoSenS, described hereafter), as well as the solutions we found for
 these problems.
@@ -822,7 +882,7 @@ We observe that:
 \end{observ}
 
 Analysis of the detailed results including the number of retries needed
-to transmit each successful packet (not given in this article for space
+to transmit each successful packet (not given in this report for space
 reasons) has also shown us that :
 
 \begin{itemize}
@@ -1211,12 +1271,6 @@ Our contributions thus consist in the following:
 In the future, we would like to try other, more powerful hardware platforms
 with the same scenarii, and try using different MAC and RDC layers in
 the network stack of the RIOT operating system.
-
-%We hope to find (a) way(s) to get a similar or better QoS than those
-%we observed here, while trying to optimize duty cycle statistics
-%to minimize the energy consumption when running WSN, whether under
-%light or heavy network loads.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
